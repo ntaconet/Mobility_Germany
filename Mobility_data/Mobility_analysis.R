@@ -13,15 +13,25 @@ library(tidyverse)
 # STEP 1 : Calculate emissions for all travels ----
 ###########################
 
-# Import emission factor data
-Emission_factors <- read_excel("Other_input/Emission_Factors.xlsx")
-Emission_factors<-Emission_factors%>%
-  mutate(EF_UBA=as.numeric(EF_UBA),EF_UBA_Fzkm=as.numeric(EF_UBA_Fzkm))
 
-# Retain only UBA data
-Emission_factors<-Emission_factors%>%
-  select(Label,varname,EF_UBA,EF_UBA_Fzkm)%>%
-  distinct() # Remove double observations [because other database distinguish transportation modes at a finer level]
+# Import emission factor data
+Emission_factors_UBA <- read_excel("Other_input/Emission_Factors_UBA.xlsx")
+Emission_factors_HBEFA <- read_excel("Other_input/Emission_Factors_HBEFA.xlsx")
+
+# Retain UBA data
+Emission_factors<-Emission_factors_UBA%>%
+  mutate(EF=EF_UBA,
+         EF_Fzkm=EF_UBA_Fzkm)%>%
+  # for Motos and AST Rufbus, use HBEFA estimates.
+  mutate(EF_Fzkm=ifelse(varname %in% c("W_VM_D","W_VM_E","W_VM_F","W_VM_N"),
+                        subset(Emission_factors_HBEFA,varname==varname & HBEFA_technology=="Benzin")$EF_HBEFA_2015, 
+                        EF_Fzkm))%>%
+  mutate(EF_Fzkm=ifelse(varname %in% c("W_VM_I"),
+                        subset(Emission_factors_HBEFA,varname==varname & HBEFA_technology=="Diesel")$EF_HBEFA_2015, 
+                        EF_Fzkm))%>%
+  
+  mutate(EF=as.numeric(EF),EF_Fzkm=as.numeric(EF_Fzkm))%>%
+  select(Label,varname,EF,EF_Fzkm)#%>%
 
 # Emissions - Wege -----
 
@@ -41,15 +51,15 @@ Wege<-Wege%>%
   filter(wegkm!=9994)%>% # unplausibler Wert
   filter(wegkm!=9999)%>% # keine Angabe
   filter(wegkm!=70703)%>% # Weg ohne Detailerfassung (CAWI)
-  mutate(emissions=ifelse(hvm_imp %in% c(8,9,17,18),
-                          # if Pkw or Lkw, then divide vehicule emissions by nb of person in pkw:
-                          (wegkm_num/(1+W_ANZBEGL))*Emission_factors$EF_UBA_Fzkm[match(hvm_diff2_matching$varname[hvm_diff2],Emission_factors$varname)],
+  mutate(emissions=ifelse(hvm_diff2 %in% c(4,5,6,7,8,9,12,17,18),
+                          # if Pkw or Lkw or Moto or Rufbus, then divide vehicule emissions by nb of person in pkw:
+                          (wegkm_num/(1+W_ANZBEGL))*Emission_factors$EF_Fzkm[match(hvm_diff2_matching$varname[hvm_diff2],Emission_factors$varname)],
                           # else, use Pkm
-                          wegkm_num*Emission_factors$EF_UBA[match(hvm_diff2_matching$varname[hvm_diff2],Emission_factors$varname)]))
+                          wegkm_num*Emission_factors$EF[match(hvm_diff2_matching$varname[hvm_diff2],Emission_factors$varname)]))
 
-# Only16093 NAs
-Na_values<-subset(Wege,is.na(Wege$emissions))
-unique(Na_values$hvm_diff2)
+# Only 3561 NAs :)
+sum(is.na(Wege$emissions))
+
 
 # Emissions - Reise ----- 
 
@@ -62,9 +72,11 @@ Reisen<-Reisen%>%
   filter(R_ENTF!=99994)%>% # unplausibler Wert
   filter(R_ENTF!=99999)%>% # keine Angabe
   mutate(emissions=ifelse(hvm_r %in% c(1),
-                          # if Pkw, then divide vehicule emissions by nb of person in pkw:
-                          (R_ENTF/(1+R_ANZBEGL))*Emission_factors$EF_UBA_Fzkm[match(hvm_r_matching$varname[hvm_r],Emission_factors$varname)],
+                          # if Pkw or Moto, then divide vehicule emissions by nb of person in pkw:
+                          (R_ENTF/(1+R_ANZBEGL))*Emission_factors$EF_Fzkm[match(hvm_r_matching$varname[hvm_r],Emission_factors$varname)],
                           # else, use Pkm
-                          R_ENTF*Emission_factors$EF_UBA[match(hvm_r_matching$varname[hvm_r],Emission_factors$varname)]))
+                          R_ENTF*Emission_factors$EF[match(hvm_r_matching$varname[hvm_r],Emission_factors$varname)]))
 
+# How many Nas? Only 948
+sum(is.na(Reisen$emissions))
 
