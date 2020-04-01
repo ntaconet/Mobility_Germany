@@ -5,7 +5,7 @@
 Emission_factors_UBA <- read_excel("Other_input/Emission_Factors_UBA.xlsx")
 Emission_factors_HBEFA <- read_excel("Other_input/Emission_Factors_HBEFA.xlsx")
 
-# Retain UBA data
+# Retain UBA data, and complete missing values with HBEFA estimates
 Emission_factors<-Emission_factors_UBA%>%
   mutate(EF=EF_UBA,
          EF_Fzkm=EF_UBA_Fzkm)%>%
@@ -19,6 +19,7 @@ Emission_factors<-Emission_factors_UBA%>%
   
   mutate(EF=as.numeric(EF),EF_Fzkm=as.numeric(EF_Fzkm))%>%
   select(Label,varname,EF,EF_Fzkm)#%>%
+
 
 # Emissions - Wege -----
 
@@ -49,11 +50,8 @@ Wege<-Wege%>%
   mutate(W_ZWECK_filled=ifelse(W_ZWECK==9,lag(W_ZWECK),W_ZWECK))%>%
   ungroup()
 
-# Only 3561 NAs :)
-sum(is.na(Wege$emissions))
-
-#Wege<-Wege%>%
-#  filter(is.na(emissions)==F)
+# nb of NAs
+#sum(is.na(Wege$emissions))
 
 # Emissions - Reise ----- 
 
@@ -81,11 +79,8 @@ Reisen<-Reisen%>%
 # How many NAs?
 #sum(is.na(Reisen$emissions))
 
-# 
-#Reisen<-Reisen%>%
-#  filter(is.na(emissions)==F)
-
 # Aggregate emissions at the person's level ---------
+
 # depending on type of travel.
 
 # R_ZWECK answers corresponding to:
@@ -105,9 +100,7 @@ Reisen_Person<-Reisen%>%
             
             # nb of reported reisen (to correct if nb of Reise is >3)
             #nb_reported_reisen=max(R_ID),
-            nb_reported_reisen=n(),
-            nb_reported_RW=sum(R_ZWECK %in% RW),
-            nb_reported_RL=sum(R_ZWECK %in% RL)
+            nb_reported_reisen=n()
             )
 
 
@@ -130,14 +123,10 @@ Wege_Person<-Wege%>%
             
             # nb of reported 
             #nb_reported_wege=max(W_ID),
-            nb_reported_wege=n(),
-            nb_reported_WL=sum(W_ZWECK_filled %in% WL),
-            nb_reported_WE=sum(W_ZWECK_filled %in% WE),
-            nb_reported_WW=sum(W_ZWECK_filled %in% WW)
+            nb_reported_wege=n()
             )
 
 Person_emissions<-merge(Reisen_Person,Wege_Person,all=T)
-# Assign 0 value to NAs?
 
 write.csv(Person_emissions,"Output/Person_emissions.csv",row.names = F)
 

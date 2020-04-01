@@ -1,3 +1,4 @@
+# 
 # This is the meta script to analyse the data.
 # Put it in a folder "Mobility_Germany", with 
 # 1/ the folder "CSV" that contains Mobility data
@@ -20,7 +21,6 @@ dir.create("Output")
 # - Aggregates emissions for different categories of travel at the person level
 # Per person emissions are stored as a csv file named "Person_emissions"
 source("calculate_emissions.R")
-
 
 ########################################
 # STEP 2 : Build dataset at person's level ----
