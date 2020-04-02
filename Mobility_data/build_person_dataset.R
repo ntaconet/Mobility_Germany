@@ -15,7 +15,7 @@ Person_dataset<-Person_dataset%>%
   mutate_at(.vars=vars(emissions_wege,emissions_WL,emissions_WE,emissions_WW),
             .funs=list(~ifelse(W_ANZWW!=0 & (W_ANZWW %in% c(99,801,802,803,804,807,808))==F,.*(nb_reported_wege+W_ANZWW)/nb_reported_wege,.)))%>%
   # if no mobility am stichtag return 0
-  mutate_at(.vars=vars(emissions_wege,emissions_WL,emissions_WE,emissions_WW),
+  mutate_at(.vars=vars(emissions_wege,emissions_WL,emissions_WE,emissions_WW,emissions_WC),
           .funs=list(~ifelse(mobil==0,0,.)))
 
 write.csv(Person_dataset,"Output/Person_dataset.csv",row.names = F)

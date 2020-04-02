@@ -32,12 +32,13 @@ Wege<-read.csv("CSV/MiD2017_Wege.csv",sep=";",fileEncoding="UTF-8-BOM")
 
 # 
 Wege<-Wege%>%
-  mutate(wegkm_num=as.numeric(gsub(",",".",as.character(wegkm))))%>% #wegkm is factor, and has comas, not dots
-  filter(hvm_diff2!=703)%>% # Weg ohne Detailerfassung (CAWI)
-  filter(hvm_diff2!=99)%>% # No answer (only ~2000 obs)
-  filter(wegkm!=9994)%>% # unplausibler Wert
-  filter(wegkm!=9999)%>% # keine Angabe
-  filter(wegkm!=70703)%>% # Weg ohne Detailerfassung (CAWI)
+  # Some variables are factors, with "," instead of dots: wegkm and W_GEW (weight)
+  mutate(wegkm_num=as.numeric(gsub(",",".",as.character(wegkm))),
+         W_GEW=as.numeric(gsub(",",".",as.character(W_GEW))))%>% #C factor, and has comas, not dots
+  # repace coding for missing values by NA for the two variables we will use
+  mutate(hvm_diff2=replace(hvm_diff2,hvm_diff2 %in% c(703,99),NA))%>% # 703: Weg ohne Detailerfassung (CAWI) / 99: No answer (only ~2000 obs)
+  mutate(wegkm_num=replace(wegkm_num,wegkm_num %in% c(9994,9999,70703),NA))%>% # 9994: unplausibler Wert / 9999: keine Angabe / 70703: Weg ohne Detailerfassung (CAWI)
+  # Compute emissions
   mutate(emissions=ifelse(hvm_diff2 %in% c(4,5,6,7,8,9,12,17,18),
                           # if Pkw or Lkw or Moto or Rufbus, then divide vehicule emissions by nb of person in vehicule:
                           (wegkm_num/(1+W_ANZBEGL))*Emission_factors$EF_Fzkm[match(hvm_diff2_matching$varname[hvm_diff2],Emission_factors$varname)],
@@ -49,22 +50,19 @@ Wege<-Wege%>%
   mutate(W_ZWECK_filled=ifelse(W_ZWECK==9,lag(W_ZWECK),W_ZWECK))%>%
   ungroup()
 
-# Only 3561 NAs :)
+# Checking how many NAs
 sum(is.na(Wege$emissions))
 
-#Wege<-Wege%>%
-#  filter(is.na(emissions)==F)
-
 # Emissions - Reise ----- 
-
 hvm_r_matching<-read_excel("Other_input/hvm_r_matching.xlsx")
 
 Reisen<-read.csv("CSV/MiD2017_Reisen.csv",sep=";",fileEncoding="UTF-8-BOM")
 
 Reisen<-Reisen%>%
-  filter(hvm_r!=99)%>% # No answer
-  filter(R_ENTF!=99994)%>% # unplausibler Wert
-  filter(R_ENTF!=99999)%>% #keine Angabe
+  # repace coding for missing values by NA for the two variables we will use
+  mutate(hvm_r=replace(hvm_r,hvm_r==99,NA))%>% # 99: No answer
+  mutate(R_ENTF=replace(R_ENTF,R_ENTF %in% c(99994,99999),NA))%>% # 99994: unplausibler Wert / 99999: keine Angabe
+  # Calculate emissions
   mutate(
     emissions=case_when(
                         # For Pkw or Moto:
@@ -80,10 +78,6 @@ Reisen<-Reisen%>%
 
 # How many NAs?
 #sum(is.na(Reisen$emissions))
-
-# 
-#Reisen<-Reisen%>%
-#  filter(is.na(emissions)==F)
 
 # Aggregate emissions at the person's level ---------
 # depending on type of travel.
@@ -104,22 +98,21 @@ Reisen_Person<-Reisen%>%
             emissions_flugzeug=sum(emissions[hvm_r==5]),
             
             # nb of reported reisen (to correct if nb of Reise is >3)
-            #nb_reported_reisen=max(R_ID),
-            nb_reported_reisen=n(),
-            nb_reported_RW=sum(R_ZWECK %in% RW),
-            nb_reported_RL=sum(R_ZWECK %in% RL)
+            nb_reported_reisen=n()
             )
-
 
 # W_ZWECK CATEGORIES
 # Everyday leisure travels
 WL=c(7,14,15)
 
 # Everyday other travel
-WE=c(1,3,4,5,6,8,11,12,13,16)
+WE=c(3,4,5,6,11,12,13,16)
 
 # Everyday work travel
 WW=c(2)
+
+# Wege-commute
+WC=c(1,8)
 
 Wege_Person<-Wege%>%
   group_by(HP_ID)%>%
@@ -127,13 +120,10 @@ Wege_Person<-Wege%>%
             emissions_WL=sum(emissions[W_ZWECK_filled %in% WL]),
             emissions_WE=sum(emissions[W_ZWECK_filled %in% WE]),
             emissions_WW=sum(emissions[W_ZWECK_filled %in% WW]),
+            emissions_WC=sum(emissions[W_ZWECK_filled %in% WC]),
             
             # nb of reported 
-            #nb_reported_wege=max(W_ID),
-            nb_reported_wege=n(),
-            nb_reported_WL=sum(W_ZWECK_filled %in% WL),
-            nb_reported_WE=sum(W_ZWECK_filled %in% WE),
-            nb_reported_WW=sum(W_ZWECK_filled %in% WW)
+            nb_reported_wege=n()
             )
 
 Person_emissions<-merge(Reisen_Person,Wege_Person,all=T)

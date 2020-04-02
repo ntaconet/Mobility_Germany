@@ -4,6 +4,9 @@
 # 2/ a folder "Other_input" that will receive the other input we will need (emission factors, ...)
 rm(list = ls())
 
+# Set directory:
+setwd("~/GitHub/Mobility_Germany/Mobility_data")
+
 # Import necessary library
 library(readxl)
 library(tidyverse)
