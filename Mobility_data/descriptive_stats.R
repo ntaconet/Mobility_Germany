@@ -60,20 +60,6 @@ print(plot)
 dev.off()
 
 
-# link with km
-pdf("Descriptive_graphs/everyday_wege.pdf")
-plot<-ggplot(data=subset(Person_dataset,
-                         emissions_RL < quantile(Person_dataset$emissions_RL,percentile_remove,na.rm=T) & 
-                           emissions_WE < quantile(Person_dataset$emissions_WE,percentile_remove,na.rm=T)),
-             aes(y=emissions_RL,x=emissions_WE))+
-  #geom_point(alpha=0.1)+
-  geom_hex()+
-  scale_fill_viridis_c() +
-  geom_point(shape = '.', col = 'white')+
-  xlab("Emissions from everyday Wege")+
-  ylab("Emissions from leisure Reise")
-print(plot)
-dev.off()
 
 
 # correlation?
@@ -94,28 +80,26 @@ percentile_remove<-0.75
 library("Hmisc")
 Person_withoutoutliers<-subset(Person_dataset,emissions_RL < wtd.quantile(Person_dataset$emissions_RL,percentile_remove,na.rm=T,weight=Person_dataset$P_GEW_num))
 
-
 for (i in 1:length(name)){
-  
-  # sum of the weights:
-  
-  #Sum_weights<-Person_withoutoutliers%>%
-  #  group_by_at(varname[i])%>%
-  #  summarise(sum_weights=sum(P_GEW_num))
-
-  #new_dataset<-Person_withoutoutliers%>%
-  #  left_join(Sum_weights,by=varname[i])    
-  
-  #essay_dataset<-new_dataset%>%
-  #  group_by(hheink_gr2)%>%
-  #  summarise(essay=sum(sum_weights),essay2=sum(P_GEW_num))
-  
   # import legend
   legend_answers<-read_excel(paste("Other_input/legend_",varname[i],".xlsx",sep=""),col_names=c("Code","Meaning"))
+
+  # Create variable containing meaning of answer
+  Person_withoutoutliers<-Person_withoutoutliers%>%
+    mutate(answer_meaning=factor(legend_answers$Meaning[match(get(varname),legend_answers$Code)],levels=legend_answers$Meaning))
   
+  # sum of the weights by categories:
+  Sum_weights<-Person_withoutoutliers%>%
+    group_by_at(varname[i])%>%
+    summarise(sum_weights=sum(P_GEW_num))
+
+  new_dataset<-Person_withoutoutliers%>%
+    left_join(Sum_weights,by=varname[i])    
+  
+
   pdf(paste("Descriptive_graphs/",name[i],".pdf",sep=""))
-  plot<-ggplot(data=Person_withoutoutliers,aes(x=factor(legend_answers$Meaning[match(get(varname),legend_answers$Code)]),
-                                    y=emissions_RL,weight=P_GEW_num))+
+  plot<-ggplot(data=new_dataset,aes(x=answer_meaning,
+                                    y=emissions_RL,weight=P_GEW_num/sum_weights))+
     #geom_boxplot(outlier.size=0.05)+
     geom_violin(draw_quantiles = c(0.5))+
     #ylim(0,limit_emissions)+
