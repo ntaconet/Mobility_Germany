@@ -91,7 +91,10 @@ RL=c(1,2,3)
 # Now let's compile emissions:
 Reisen_Person<-Reisen%>%
   group_by(HP_ID)%>%
-  summarise(emissions_reise=sum(emissions),
+  summarise(km_reise=sum(R_ENTF),
+            km_RW=sum(R_ENTF[R_ZWECK %in% RW]),
+            km_RL=sum(R_ENTF[R_ZWECK %in% RL]),
+            emissions_reise=sum(emissions),
             emissions_RW=sum(emissions[R_ZWECK %in% RW]),
             emissions_RL=sum(emissions[R_ZWECK %in% RL]),
             # also adding total Flugzeug
@@ -116,7 +119,14 @@ WC=c(1,8)
 
 Wege_Person<-Wege%>%
   group_by(HP_ID)%>%
-  summarise(emissions_wege=sum(emissions),
+  summarise(km_weg=sum(wegkm_num),
+            km_WL=sum(wegkm_num[W_ZWECK_filled %in% WL]),
+            km_WE=sum(wegkm_num[W_ZWECK_filled %in% WE]),
+            km_WW=sum(wegkm_num[W_ZWECK_filled %in% WW]),
+            km_WC=sum(wegkm_num[W_ZWECK_filled %in% WC]),
+            
+            #emissions
+            emissions_wege=sum(emissions),
             emissions_WL=sum(emissions[W_ZWECK_filled %in% WL]),
             emissions_WE=sum(emissions[W_ZWECK_filled %in% WE]),
             emissions_WW=sum(emissions[W_ZWECK_filled %in% WW]),
