@@ -10,6 +10,7 @@ setwd("~/GitHub/Mobility_Germany/Mobility_data")
 # Import necessary library
 library(readxl)
 library(tidyverse)
+library("Hmisc")
 
 # Create Output folder
 dir.create("Output")
