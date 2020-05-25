@@ -7,10 +7,13 @@ rm(list = ls())
 # Set directory:
 setwd("~/GitHub/Mobility_Germany/Mobility_data")
 
+
 # Import necessary library
 library(readxl)
 library(tidyverse)
 library("Hmisc")
+library(rpart)
+library(rpart.plot)
 
 # Create Output folder
 dir.create("Output")
