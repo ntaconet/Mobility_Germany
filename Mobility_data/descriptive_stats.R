@@ -78,9 +78,7 @@ emissions_top10<-sum(Top_10_RL$emissions_RL*Top_10_RL$P_GEW_num)
 emissions_tot<-sum(Person_dataset$emissions_RL*Person_dataset$P_GEW_num,na.rm=T)
 Share_of_emissions<-emissions_top10/emissions_tot
 
-
 # Then emissions from long-distance reise against:
-
 name=c("Income","Education","Household_composition","Age","Enjoy_Biking","Gender","Rural_Urban","Month")
 varname=c("hheink_gr2","P_BIL","hhgr_gr","alter_gr2","P_EINVM_RAD","HP_SEX","GEMTYP","ST_MONAT")
 
@@ -237,6 +235,8 @@ for (output_type in c("emissions_RL","emissions_reise","emissions_RW","emissions
 pdf("Descriptive_graphs/Model_binary.pdf")
 rpart.plot(model_binary)
 dev.off()
+
+
 
 ################
 # Zone for tests ----
