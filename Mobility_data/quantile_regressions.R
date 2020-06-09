@@ -6,9 +6,7 @@ Person_dataset<-read.csv("Output/Person_dataset.csv")
 #which months have a higher?
 
 Person_dataset<-Person_dataset%>%
-  mutate(P_GEW_num=as.numeric(gsub(",",".",as.character(P_GEW))), # weights should be numeric
-         ST_MONAT=factor(ST_MONAT),
-         alter_gr2=factor(alter_gr2))%>%
+  mutate(P_GEW_num=as.numeric(gsub(",",".",as.character(P_GEW)))) # weights should be numeric
   filter(alter_gr2 %in% c(3:9)) # remove ppl below 20
          #relevel(ST_MONAT,ref=10)) #  
 
@@ -19,6 +17,8 @@ Person_dataset<-Person_dataset%>%
 # Import variable table ----
 ################
 
+# Import a table, which contains the different variables to be used in the regression 
+# In the table, variables are classified, and values to remove.
 table_variables<-read_excel("Other_input/Table_variables.xlsx")
 
 ################
@@ -37,27 +37,31 @@ Regression_dataset<-Person_dataset
 # Remove answers corresponding to "No answer"
 for (i in nrow(Variables_tokeep)){
   # except for MONTHS, which is a factor
-  if ((class(Variables_tokeep$varname[i])=="factor")==F){
-    Regression_dataset<-Regression_dataset%>%
-      filter(get(Variables_tokeep$varname[i])<Variables_tokeep$remove_above[i])
+  #if ((class(Regression_dataset[Variables_tokeep$varname[i]])=="factor")==F){
+  Regression_dataset<-Regression_dataset%>%
+    filter(get(Variables_tokeep$varname[i])<Variables_tokeep$remove_above[i])
 
-  }
+  #}
 }
+
+Regression_dataset<-Regression_dataset%>%
+  mutate(ST_MONAT=factor(ST_MONAT),
+         alter_gr2=factor(alter_gr2))
 
 Dependant_variables<-Variables_tokeep$varname
 
 
 Regression_Quantile<-rq(paste(Independant_variable,"~",paste(Dependant_variables,collapse=" + ")),
-                        data=Person_dataset,
+                        data=Regression_dataset,
                         tau=c(0.25,0.5,0.75,0.9))
 
 # compare to OLS
 Regression_OLS<-lm(paste(Independant_variable,"~",paste(Dependant_variables,collapse=" + ")),
-                   data=Person_dataset)
+                   data=Regression_dataset)
 
 
 Regression_Quantile
-#summary(Regression_Quantile,se="ker")
+summary(Regression_Quantile,se="ker")
 
 summary(Regression_OLS)
 
