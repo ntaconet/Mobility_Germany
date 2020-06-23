@@ -10,8 +10,12 @@ Person_dataset<-Person_dataset%>%
   filter(alter_gr2 %in% c(3:9)) # remove ppl below 20
          #relevel(ST_MONAT,ref=10)) #  
 
-        
 #dir.create("Descriptive_graphs")
+
+
+# first let's perform quantile regression for the main variables
+#Independant_variable<-"emissions_RL"
+Independant_variable<-"Total_emissions_wout_RW"
 
 ################
 # Import variable table ----
@@ -19,14 +23,12 @@ Person_dataset<-Person_dataset%>%
 
 # Import a table, which contains the different variables to be used in the regression 
 # In the table, variables are classified, and values to remove.
-table_variables<-read_excel("Other_input/Table_variables.xlsx")
+table_variables<-read_excel(paste("Other_input/Table_variables_",Independant_variable,".xlsx",sep=""))
 
 ################
 # Perform quantile regressions ----
 ################
 
-# first let's perform quantile regression for the main variables
-Independant_variable<-"emissions_RL"
 Weights<-"P_GEW_num"
 
 # Choose the dependent variables
@@ -88,12 +90,16 @@ Regression_Quantile_tau50<-rq(paste(Independant_variable,"~",paste(Dependant_var
                               tau=c(0.5),
                               weights=P_GEW_num)
 
-
 #Regression_Quantile
+
 #summary(Regression_Quantile,se="ker")
 #summary(Regression_OLS)
 
 export_summs( Regression_OLS,Regression_Quantile_tau90,Regression_Quantile_tau75,Regression_Quantile_tau50, 
               model.names = c("OLS","Quantile (50%)","Quantile (75%)","Quantile (90%)"),
-              to.file = "docx", file.name = "Comparing_OLS_to_Quantile.docx")
+              to.file = "docx", file.name = paste("Output_regressions/",as.character(Independant_variable),"_Comparing_OLS_to_Quantile.docx"),sep="")
 
+
+###########
+# Quantile regression on total emissions
+###########
