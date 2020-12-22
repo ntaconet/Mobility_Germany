@@ -18,4 +18,16 @@ Person_dataset<-Person_dataset%>%
   mutate_at(.vars=vars(emissions_wege,emissions_WL,emissions_WE,emissions_WW,emissions_WC),
           .funs=list(~ifelse(mobil==0,0,.)))
 
+# Build total emission variable
+# emissions from wege should be multiplied by 365 (?)
+factor_wege<-365
+# emissions from Reisen should be multiplied by 4
+factor_reisen<-4
+
+Person_dataset<-Person_dataset%>%
+  mutate(Total_emissions=factor_wege*emissions_wege+factor_reisen*emissions_reise,
+         # exclude Reisen Work
+         Total_emissions_wout_RW=factor_wege*emissions_wege+factor_reisen*(emissions_reise-emissions_RW))
+
+
 write.csv(Person_dataset,"Output/Person_dataset.csv",row.names = F)

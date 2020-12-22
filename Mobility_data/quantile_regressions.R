@@ -17,6 +17,8 @@ Person_dataset<-Person_dataset%>%
 #Independant_variable<-"emissions_RL"
 Independant_variable<-"Total_emissions_wout_RW"
 
+#suffix<-"without_emissions_commute"
+
 ################
 # Import variable table ----
 ################
@@ -32,8 +34,8 @@ table_variables<-read_excel(paste("Other_input/Table_variables_",Independant_var
 Weights<-"P_GEW_num"
 
 # Choose the dependent variables
-#Variables_tokeep<-subset(table_variables,type %in% c("main","control","attitude","accessibility","other"))
-Variables_tokeep<-subset(table_variables,type %in% c("main","control","accessibility","other"))
+Variables_tokeep<-subset(table_variables,type %in% c("main","control","attitude","accessibility","other"))
+#Variables_tokeep<-subset(table_variables,type %in% c("main","control","accessibility","other"))
 
 Dependant_variables<-Variables_tokeep$label
 
@@ -97,8 +99,9 @@ Regression_Quantile_tau50<-rq(paste(Independant_variable,"~",paste(Dependant_var
 
 export_summs( Regression_OLS,Regression_Quantile_tau90,Regression_Quantile_tau75,Regression_Quantile_tau50, 
               model.names = c("OLS","Quantile (50%)","Quantile (75%)","Quantile (90%)"),
-              to.file = "docx", file.name = paste("Output_regressions/",as.character(Independant_variable),"_Comparing_OLS_to_Quantile.docx"),sep="")
-
+              #to.file = "docx", file.name = paste("Output_regressions/",as.character(Independant_variable),"_Comparing_OLS_to_Quantile.docx"),sep="")
+              to.file = "docx", file.name = paste("Output_regressions/",as.character(Independant_variable),"_without","_Comparing_OLS_to_Quantile.docx"),sep="")
+  
 
 ###########
 # Quantile regression on total emissions

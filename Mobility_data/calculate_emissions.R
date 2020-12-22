@@ -47,8 +47,8 @@ Wege<-Wege%>%
   # For the answer "Ruckweg vom vorherigen Weg", assign Zweck from previous travel 
   group_by(HP_ID)%>%
   arrange(W_ID,.by_group=TRUE)%>%
-  mutate(W_ZWECK_filled=ifelse(W_ZWECK==9,lag(W_ZWECK),W_ZWECK))%>%
-  ungroup()
+  mutate(W_ZWECK_filled=ifelse(W_ZWECK==9,lag(W_ZWECK),W_ZWECK))#%>%
+  #ungroup()
 
 # Checking how many NAs
 sum(is.na(Wege$emissions))
