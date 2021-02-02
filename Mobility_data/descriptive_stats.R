@@ -3,8 +3,15 @@ Person_dataset<-read.csv("Output/Person_dataset.csv")
 
 Person_dataset<-Person_dataset%>%
   mutate(P_GEW_num=as.numeric(gsub(",",".",as.character(P_GEW))))
-                              
+
 dir.create("Descriptive_graphs")
+
+
+# Basic density plots
+
+ggplot(data=subset(Person_dataset))+
+  #geom_density(aes(x=Total_emissions),color="red")
+  geom_density(aes(x=emissions_wege/Total_emissions),color="black")
 
 # In this plot I will plot a few descriptive graphs to show relationship between long-distance Reise emissions and other variables
 
@@ -66,10 +73,7 @@ ggsave("Descriptive_graphs/commute_wege.pdf",plot=plot)
 data_cor<-cor(Person_dataset[c("emissions_RL","emissions_WE","emissions_WC","emissions_WL")],use="complete.obs")
 
 
-
 # how many ppl are responsible for the top 10% of emissions
-
-
 
 Top_10_RL<-Person_dataset%>%
   filter(emissions_RL>wtd.quantile(Person_dataset$emissions_RL,0.90,na.rm=T,weight=Person_dataset$P_GEW_num))
@@ -120,79 +124,6 @@ for (i in 1:length(name)){
 
 
 ################
-# Regressions ----
-################
-
-# Important thing to note is that we only have 30k observations
-#(Reise module is actually only for the official survey)
-
-# for all, the R2 is very low...
-
-# First: income
-summary(lm(emissions_RL~hheink_gr2,data=Person_dataset,weights=P_GEW_num))
-# sign makes sense!
-
-# Then income and rural/urban
-summary(lm(emissions_RL~hheink_gr2+GEMTYP,data=Person_dataset,weights=P_GEW_num))
-
-# Then income, rural/urban and gender
-summary(lm(emissions_RL~hheink_gr2+GEMTYP+HP_SEX,data=subset(Person_dataset,HP_SEX %in% c(1,2)),weights=P_GEW_num))
-
-# Removing gender because found not significant.
-# And adding question about whether you enjoy bike
-summary(lm(emissions_RL~hheink_gr2+GEMTYP+P_EINVM_RAD,data=subset(Person_dataset,P_EINVM_RAD %in% c(1:4)),weights=P_GEW_num))
-
-# Trying instead to use the "emissions_WC" (emissions for the commute)
-summary(lm(emissions_RL~hheink_gr2+GEMTYP+emissions_WC,data=Person_dataset,weights=P_GEW_num))
-# seems like it is not significant... same results for emissions_wege
-
-Dataset_withoutNAs<-subset(Person_dataset,
-                           is.na(emissions_RL)==F & HP_SEX %in% c(1,2) & alter_gr2!=99 & alter_gr2>2 & P_BIL<7 & auto!=9 & P_NUTZ_RAD<6)
-
-# maybe age too, and delete ppl under 20
-summary(lm(emissions_RL~hheink_gr2+GEMTYP+HP_SEX+factor(alter_gr2)+emissions_WC+P_BIL+hhgr_gr,
-           data=subset(Dataset_withoutNAs,HP_SEX %in% c(1,2) & alter_gr2!=99 & alter_gr2>2 & P_BIL<7)),
-           weights=P_GEW_num)
-
-# check for how months (ST_MONAT plays a role)
-summary(lm(emissions_RL~factor(ST_MONAT),
-           data=subset(Dataset_withoutNAs,HP_SEX %in% c(1,2) & alter_gr2!=99 & alter_gr2>2 & P_BIL<7)),
-        weights=P_GEW_num)
-# very few are significant... maybe grouping months together?
-
-summary(lm(emissions_RL~factor(ST_MONAT),
-           data=subset(Dataset_withoutNAs,HP_SEX %in% c(1,2) & alter_gr2!=99 & alter_gr2>2 & P_BIL<7)),
-        weights=P_GEW_num)
-
-
-# log model
-
-Dataset_withoutNAs<-Dataset_withoutNAs%>%
-  mutate(zeroemissionRL=(emissions_RL==0))
-
-mylogit <- glm(zeroemissionRL ~ hheink_gr2+GEMTYP+HP_SEX+factor(alter_gr2)+emissions_WC+P_BIL+hhgr_gr, data = Dataset_withoutNAs, family = "binomial")
-
-summary(mylogit)
-
-
-# Making the same thing with the question "Verkehrsmittel auf regelm berufl Wegen am Stichtag"
-# Create a dummy variable that says if you take your bike for commute
-Person_dataset<-Person_dataset%>%
-  mutate(bike_to_work=NA)%>%
-  mutate(bike_to_work=ifelse(P_RBW_VM %in% c(2,3),1,bike_to_work))%>%
-  mutate(bike_to_work=ifelse(is.na(P_RBW_VM)==F & (P_RBW_VM %in% c(2,3))==F,0,bike_to_work))
-  
-
-
-summary(lm(emissions_RL~hheink_gr2+GEMTYP+bike_to_work,data=Person_dataset,weights=P_GEW_num))
-# also not very significant... but each time the direction of the effect is known
-
-# Also try to use the answer about bewusster verzicht of a car but i'm not sure how!
-
-# Let's see if how much km_RL explains:
-summary(lm(emissions_RL~km_RL+hheink_gr2+GEMTYP,data=Person_dataset,weights=P_GEW_num))
-
-################
 # Trying partitioning ----
 ################
 
@@ -236,114 +167,8 @@ pdf("Descriptive_graphs/Model_binary.pdf")
 rpart.plot(model_binary)
 dev.off()
 
-################
-# Bar charts ----
-################
-
-# What is the share of emissions for different categories of emitters
-# 
-
-Person_dataset_subset<-Person_dataset%>%
-  filter(!is.na(Total_emissions_wout_RW) | !is.na(emissions_wege))
-
-factor_wege<-365
-
-Person_dataset_subset<-Person_dataset_subset%>%
-  #mutate(Q_total_emissions = ntile(Total_emissions_wout_RW, 10))%>%
-  mutate(Q_total_emissions = weighted_ntile(Total_emissions_wout_RW, 10,weights=P_GEW_num))%>%
-  mutate(share_emissions_from_wege=(factor_wege*emissions_wege)/Total_emissions_wout_RW)
-
-Qtile<-wtd.quantile(Person_dataset_subset$Total_emissions_wout_RW,0.1*c(1:9),
-             weights=Person_dataset_subset$P_GEW_num)
-
-Person_dataset_subset<-Person_dataset_subset%>%
-  mutate(Q_cut=cut(Total_emissions_wout_RW,Qtile))
-
-data_mean<-Person_dataset_subset%>%
-  group_by(Q_cut)%>%
-  summarise(Total_emissions=weighted.mean(Total_emissions_wout_RW,weights=P_GEW_num,na.rm=T),
-            Emissions_wege=weighted.mean(factor_wege*emissions_wege,weights=P_GEW_num,na.rm=T))
 
 
-plot<-ggplot(data=data_mean)+
-  geom_bar(aes(Q_cut,Total_emissions,fill="Emissions from Reisen"),stat="identity")+
-  geom_bar(aes(Q_cut,Emissions_wege,fill="Emissions from Wege"),stat="identity")+
-  scale_x_discrete(name="Quantile",labels=as.character(c(2:10)))
+# let's plot a Lorenz Curve
 
-plot
-ggsave("Descriptive_graphs/Total_emissions.pdf",plot=plot)  
-
-
-ggplot()+
-  geom_bar(data=subset(Person_dataset_subset,Total_emissions_wout_RW %in% c(Qtile[2],Qtile[3])),
-           aes(3,Total_emissions_wout_RW),stat="summary",fun="mean")+
-  geom_bar(data=subset(Person_dataset_subset,Total_emissions_wout_RW %in% c(Qtile[3],Qtile[4])),
-           aes(4,Total_emissions_wout_RW),stat="summary",fun="mean")+
-  geom_bar(data=subset(Person_dataset_subset,Total_emissions_wout_RW %in% c(Qtile[4],Qtile[5])),
-         aes(5,Total_emissions_wout_RW),stat="summary",fun="mean")+
-  geom_bar(data=subset(Person_dataset_subset,Total_emissions_wout_RW %in% c(Qtile[5],Qtile[6])),
-           aes(6,Total_emissions_wout_RW),stat="summary",fun="mean")+
-  geom_bar(data=subset(Person_dataset_subset,Total_emissions_wout_RW %in% c(Qtile[6],Qtile[7])),
-           aes(7,Total_emissions_wout_RW),stat="summary",fun="mean")+
-  geom_bar(data=subset(Person_dataset_subset,Total_emissions_wout_RW %in% c(Qtile[7],Qtile[8])),
-           aes(8,Total_emissions_wout_RW),stat="summary",fun="mean")+
-  geom_bar(data=subset(Person_dataset_subset,Total_emissions_wout_RW %in% c(Qtile[8],Qtile[9])),
-           aes(9,Total_emissions_wout_RW),stat="summary",fun="mean")+
-  geom_bar(data=subset(Person_dataset_subset,Total_emissions_wout_RW>Qtile[9]),
-           aes(10,Total_emissions_wout_RW),stat="summary",fun="mean")
-  
-
-
-ggplot(data=Person_dataset_subset)+
-  geom_bar(aes(Q_total_emissions,1,fill="Reisen",weight=P_GEW_num),stat="summary",fun="mean",)+
-  geom_bar(aes(Q_total_emissions,share_emissions_from_wege,fill="Wege",weight=P_GEW_num),stat="summary",fun="mean")
-  
-data_mean<-Person_dataset_subset%>%
-  group_by(Q_total_emissions)%>%
-  summarise(Total_emissions=weighted.mean(Total_emissions_wout_RW,weights=P_GEW_num,na.rm=T),
-            Emissions_wege=weighted.mean(factor_wege*emissions_wege,weights=P_GEW_num,na.rm=T))
-
-#essay<-subset(Person_dataset,Total_emissions_wout_RW==NaN)
-
-ggplot(data=data_mean)+
-  geom_bar(aes(Q_total_emissions,Total_emissions,fill="Reisen"),stat="identity")+
-  geom_bar(aes(Q_total_emissions,Emissions_wege,fill="Wege"),stat="identity")
-
-legend_answers<-read_excel(paste("Other_input/legend_",varname[i],".xlsx",sep=""),col_names=c("Code","Meaning"))
-
-Sum_weights<-Person_dataset%>%
-  group_by_at("Q_total_emissions")%>%
-  summarise(sum_weights=sum(P_GEW_num))
-
-new_dataset<-Person_dataset%>%
-  left_join(Sum_weights,by="Q_total_emissions")    
-
-
-plot<-ggplot(data=new_dataset,aes(x=factor(Q_total_emissions),
-                                  y=share_emissions_from_wege,weight=P_GEW_num/sum_weights))+
-  #geom_boxplot(outlier.size=0.05)+
-  geom_violin()
-  #ylim(0,wtd.quantile(Person_dataset$Total_emissions_wout_RW,percentile_remove,na.rm=T,weight=Person_dataset$P_GEW_num))
-  #xlab(name[i])+
-  #ylab("Emissions from leisure Reise")+
-  #theme(axis.text.x = element_text(angle = 90, hjust = 1))
-#print(plot)
-#dev.off()
-plot
-
-head(Person_dataset[,c("Total_emissions","Q_total_emissions")])
-
-################
-# Zone for tests ----
-################
-
-# who has highest data
-Person_highRL<-subset(Person_dataset,emissions_RL==max(Person_dataset$emissions_RL,na.rm=T))$HP_ID
-Reisen_personh<-subset(Reisen,HP_ID==Person_highRL)
-Reisen_personh[c("hvm_r","R_ANZBEGL","R_ENTF")]
-
-subset(Person_dataset,emissions_RL==max(Person_dataset$emissions_RL,na.rm=T))$P_ANZREISE
-
-# the person has 3 reisen, which include a plane trip. But total 30 reisen (!!).
-unique(Person_dataset$P_ANZREISE)
 
