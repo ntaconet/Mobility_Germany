@@ -18,16 +18,45 @@ Person_dataset<-Person_dataset%>%
   mutate_at(.vars=vars(emissions_wege,emissions_WL,emissions_WE,emissions_WW,emissions_WC),
           .funs=list(~ifelse(mobil==0,0,.)))
 
-# Build total emission variable
+# Adjust emissions for Reisen and Wege
 # emissions from wege should be multiplied by 365 (?)
 factor_wege<-365
-# emissions from Reisen should be multiplied by 4
+# emissions from Reisen should be multiplied by 4 (last three months)
 factor_reisen<-4
 
 Person_dataset<-Person_dataset%>%
-  mutate(Total_emissions=factor_wege*emissions_wege+factor_reisen*emissions_reise,
+  mutate(emissions_reise=emissions_reise*factor_reisen,
+         emissions_RW=emissions_RW*factor_reisen,
+         emissions_RL=emissions_RL*factor_reisen,
+         emissions_flugzeug=emissions_flugzeug*factor_reisen)%>%
+  mutate(emissions_wege=emissions_wege*factor_wege,
+         emissions_WL=emissions_WL*factor_wege,
+         emissions_WE=emissions_WE*factor_wege,
+         emissions_WW=emissions_WW*factor_wege)
+
+# currently: unit is gCO2, so we convert into kgCO2e
+conversion_CO2_unit<-10**3
+
+divide_by_conversion_factor<-function(x_emissions){
+  return(x_emissions/conversion_CO2_unit)
+}
+
+Person_dataset<-Person_dataset%>%
+  mutate_at(vars(contains("emissions")),divide_by_conversion_factor)
+
+
+Person_dataset<-Person_dataset%>%
+  mutate(Total_emissions=emissions_wege+emissions_reise,
          # exclude Reisen Work
-         Total_emissions_wout_RW=factor_wege*emissions_wege+factor_reisen*(emissions_reise-emissions_RW))
+         Total_emissions_wout_RW=emissions_wege+(emissions_reise-emissions_RW))
+
+# Making the same thing with the question "Verkehrsmittel auf regelm berufl Wegen am Stichtag"
+# Create a dummy variable that says if you take your bike for commute
+Person_dataset<-Person_dataset%>%
+  mutate(bike_to_work=NA)%>%
+  mutate(bike_to_work=ifelse(P_RBW_VM %in% c(2,3),1,bike_to_work))%>%
+  mutate(bike_to_work=ifelse(is.na(P_RBW_VM)==F & (P_RBW_VM %in% c(2,3))==F,0,bike_to_work))
 
 
 write.csv(Person_dataset,"Output/Person_dataset.csv",row.names = F)
+

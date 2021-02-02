@@ -20,6 +20,10 @@ library("quantreg") # quantile regression package
 library(jtools) # to export results from regressions
 library(huxtable) # to export results from regressions
 library(grattan) # to have quantiles with weights
+library(randomForest)
+library(lawstat) # for plotting a lorenz curve (but function doesn't work...)
+library(ineq) # for plotting a lorenz curve
+library(stargazer)
 
 # Create Output folder
 dir.create("Output")
@@ -48,4 +52,16 @@ source("build_person_dataset.R")
 # STEP 3 : Descriptive stat and graphs?
 #######################################
 
-source("descriptive_stats.R")
+#source("descriptive_stats.R")
+
+
+
+########################################
+# STEP 4 : Regressions
+#######################################
+
+
+
+#source("quantile_regressions.R")
+
+
