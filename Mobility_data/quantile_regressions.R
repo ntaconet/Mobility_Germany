@@ -1,186 +1,26 @@
 
-# first let's choose independant variable and.
 
-# emissions_RL stands for emissions from Reise Leisure
-Independant_variable<-"emissions_RL"
-
-# If we want to look at total emissions wout Reise for work?
-#Independant_variable<-"Total_emissions_wout_RW"
-
-# emissions for everyday life outside leisure:
-#Independant_variable<-"emissions_wege"
-
-
-#If we want emissions from flugzeug
-#Independant_variable<-"emissions_flugzeug"
-
-#suffix<-"without_emissions_commute"
-
-################
-# Import variable table ----
-################
-
-regression_type<-"basic"
-
-add_control_bool<-TRUE
-
-add_control<-c("P_NUTZ_RAD","P_NUTZ_OPNV")
-#add_control<-"emissions_wege"
-#add_control<-c("P_NUTZ_RAD","P_NUTZ_OPNV","P_NUTZ_AUTO")
-#add_control<-c(add_control,"P_EINVM_RAD","P_EINVM_AUTO","P_EINVM_OPNV","P_EINVM_FUSS")
-#add_control<-c("P_ZUF_RAD","P_ZUF_AUTO","P_ZUF_OPNV","P_ZUF_FUSS")
-
-suffix_add_control<-""
-if (add_control_bool==T){
-  #suffix_add_control<-add_control
-  suffix_add_control<-"compensation"
-}
-
-
-
-Person_dataset<-read.csv("Output/Person_dataset.csv")
-
-
-# making sure variable types are correct
-
-Person_dataset<-Person_dataset%>%
-  mutate(P_GEW_num=as.numeric(gsub(",",".",as.character(P_GEW))))%>% # weights should be numeric
-  filter(alter_gr1 %in% c(5:9))# remove ppl below 18 years old
-         #relevel(ST_MONAT,ref=10)) #  
-
-# Lorenz curve ----
-
-# 
-data_lorenzcurve<-subset(Person_dataset,is.na(Total_emissions_wout_RW)==F)
-
-#lorenz.curve(data=data_lorenzcurve[1:100,c("Total_emissions_wout_RW","P_GEW_num")])
-
-plot(Lc(data_lorenzcurve$Total_emissions_wout_RW,n=data_lorenzcurve$P_GEW_num))
-
-plot(Lc(data_lorenzcurve$emissions_reise,n=data_lorenzcurve$P_GEW_num))
-
-
-
-unique(Person_dataset$ST_MONAT_grouped)
-
-# Import a table, which contains the different variables to be used in the regression 
-# In the table, variables are classified, and each line specifies values to remove (corresponding to no Answer, NA...).
-table_variables<-read_excel(paste("Other_input/Table_Dependent_Variables_",regression_type,".xlsx",sep=""))
-
-################
-# Perform quantile regressions ----
-################
-
-Weights<-"P_GEW_num"
-
-# Choose the dependent variables
-Variables_tokeep<-subset(table_variables,type %in% c("main","control","attitude","accessibility","other") & include==1 | (add_control_bool==T & varname %in% add_control))
-#Variables_tokeep<-subset(table_variables,type %in% c("main","control","accessibility","other"))
-
-Dependant_variables<-Variables_tokeep$label
-
-
-
-Regression_dataset<-Person_dataset%>%
-  select(all_of(Independant_variable), 
-         Variables_tokeep$varname,
-         Weights)%>%
-  na.omit()
-
-
-
-Regression_dataset<-Regression_dataset%>%
-  rename_at(vars(as.character(Variables_tokeep$varname)),~as.character(Variables_tokeep$label))
-
-
-# Remove answers corresponding to "No answer"
-for (i in 1:nrow(Variables_tokeep)){
-  print(Variables_tokeep$varname[i])
-  Regression_dataset<-Regression_dataset%>%
-    filter(get(Variables_tokeep$label[i])<Variables_tokeep$remove_above[i])
-}
-
-# Change a few labels:
-
-Regression_dataset<-Regression_dataset%>%
-  mutate(Income=case_when(Income %in% c(1,2) ~ "1. Less than 900e/m",
-                          Income %in% c(3,4) ~ "2. 900-2000e/m",
-                          Income %in% c(5,6) ~ "3. 2000-4000e/m",
-                          Income %in% c(7,8) ~ "4. 4000-6000e/m",
-                          Income %in% c(9,10) ~ "5. >6000e/m"))
-
-
-Regression_dataset<-Regression_dataset%>%
-  mutate(Education=case_when(Education %in% c(1,2,3) ~ "1. Primary",
-                             Education %in% c(4) ~ "2. Secondary",
-                             Education %in% c(5,6) ~ "3. Tertiary"))
-
-Regression_dataset<-Regression_dataset%>%
-  mutate(Location=case_when(Location %in% c(55) ~ "1. Small city",
-                            Location %in% c(54) ~ "2. Staedtischer Raum",
-                            Location %in% c(53) ~ "3. Middle city",
-                            Location %in% c(52) ~ "4. Big city",
-                            Location %in% c(51) ~ "5. Metropole"))
-
-# Descriptive graph for days:
-
-
-ggplot(data=Regression_dataset,aes(x=factor(ST_WOTAG),y=emissions_wege/emissions_RL))+
-  geom_boxplot(outlier.shape=NA)+
-  coord_cartesian(ylim=c(0,30))
-
-ggplot(data=Regression_dataset,aes(x=factor(ST_WOTAG),y=emissions_wege))+
-  geom_boxplot(outlier.shape=NA)+
-  coord_cartesian(ylim=c(0,6000))
-
-ggplot(data=Regression_dataset,aes(x=factor(ST_MONAT),y=emissions_reise))+
-  geom_boxplot(outlier.shape=NA)+
-  coord_cartesian(ylim=c(0,10**3))
-
-
-#dir.create("Descriptive_graphs")
-if (FALSE){
-Regression_dataset<-Regression_dataset%>%
-  mutate(Month=case_when(Month %in% c(1,2,3,4) ~ "1_low",
-                            Month %in% c(5,6,7,8,12) ~ "2_medium",
-                            Month %in% c(9,10,11) ~ "3_high"))%>%
-  mutate(Month=factor(Month))%>%
-  mutate(Weekday=case_when(Weekday %in% c(1,2,3,4,5) ~ "1_weekday",
-                            Weekday %in% c(6) ~ "2_Saturday",
-                            Weekday %in% c(7) ~ "3_Sunday"))%>%
-  mutate(Weekday=factor(Weekday))
-}
-
-
-Regression_dataset<-Regression_dataset%>%
-  mutate(#Month=factor(Month),
-         Age=factor(Age),
-         Income=factor(Income),
-         Education=factor(Education),
-         Household_compo=factor(Household_compo),
-         Location=factor(Location),
-         Employment=factor(Employment),
-         Gender=factor(Gender))
-#         Income=factor(Income))
-
-
-
-
-if (FALSE){
-Regression_Quantile<-rq(paste(Independant_variable,"~",paste(Dependant_variables,collapse=" + ")),
-                        data=Regression_dataset,
-                        tau=c(0.25,0.5,0.75,0.9),
-                        weights=P_GEW_num)
-
-
-Regression_Quantile
-
-}
-# compare to OLS
+#Regression_OLS<-lm(paste(Independant_variable,"~",paste(Dependant_variables,collapse=" + ")),
 Regression_OLS<-lm(paste(Independant_variable,"~",paste(Dependant_variables,collapse=" + ")),
                    data=Regression_dataset,
                    weights=P_GEW_num)
 
+stargazer(car::vif(Regression_OLS))
+
+pdf(paste("Robustness_graphs/Robustnesscheck_",Independant_variable,suffix_add_control,".pdf",sep=""))
+par(mfrow = c(2, 2))
+plot(Regression_OLS)
+dev.off()
+
+# plot normality
+pdf(paste("Robustness_graphs/Normality_",Independant_variable,suffix_add_control,".pdf",sep=""))
+plot(Regression_OLS,2)
+dev.off()
+
+# plot heteroscedasticity
+pdf(paste("Robustness_graphs/Heteroscedasticity_",Independant_variable,suffix_add_control,".pdf",sep=""))
+plot(Regression_OLS,3)
+dev.off()
 
 #Regression_Quantile
 
@@ -204,11 +44,11 @@ Regression_Quantile_tau50<-rq(paste(Independant_variable,"~",paste(Dependant_var
                               weights=P_GEW_num)
 
 
-Regression_OLS
+#Regression_OLS
 
-export_summs(Regression_OLS,Regression_Quantile_tau50,Regression_Quantile_tau75,Regression_Quantile_tau90, 
-              model.names = c("OLS","Quantile (50%)","Quantile (75%)","Quantile (90%)"),
-              to.file = "docx", file.name = paste("Output_regressions/",as.character(Independant_variable),"_",regression_type,"_",suffix_add_control,".docx"),sep="")
+#export_summs(Regression_OLS,Regression_Quantile_tau50,Regression_Quantile_tau75,Regression_Quantile_tau90, 
+ #             model.names = c("OLS","Quantile (50%)","Quantile (75%)","Quantile (90%)"),
+  #            to.file = "docx", file.name = paste("Output_regressions/",as.character(Independant_variable),"_",regression_type,"_",suffix_add_control,".docx"),sep="")
               #to.file = "docx", file.name = paste("Output_regressions/",as.character(Independant_variable),"_without","_Comparing_OLS_to_Quantile.docx"),sep="")
 
 
@@ -218,18 +58,65 @@ export_summs(Regression_OLS,Regression_Quantile_tau50,Regression_Quantile_tau75,
 
 
 
-Regression_OLS<-lm(paste(Independant_variable,"~",paste(Dependant_variables,collapse=" + ")),
-                   data=Regression_dataset,
-                   weights=P_GEW_num)
-
-
-
-
-
-
 #if (FALSE){
 
+# for flugzeug only show 90th percentile
+#stargazer(Regression_OLS,Regression_Quantile_tau90, 
+
+# otherwise all:
 stargazer(Regression_OLS,Regression_Quantile_tau50,Regression_Quantile_tau75,Regression_Quantile_tau90, 
+          intercept.bottom = FALSE,
+          digits=0,
+          rq.se="boot",
+          
+          #rq.se="nid",
+          #ci=TRUE,
+          #ci.level=0.90,
+          style = "aer",
+          title="Quantile Regression Results",
+          align=TRUE,
+          dep.var.caption  = "",
+          model.numbers = TRUE
+          ,  t.auto = TRUE, p.auto = TRUE,
+          font.size="scriptsize", keep.stat="aic",
+          dep.var.labels   = "",
+          multicolumn = TRUE,
+          single.row = TRUE,
+          #,omit.stat=c("f", "ser"),
+          column.sep.width = "0.5pt",
+          dep.var.labels.include = TRUE)
+
+if (FALSE){
+
+# remove car variables: 
+Dependant_variables_without_car<-Dependant_variables[!(Dependant_variables %in% c("Enjoy_Auto","Car_ownership"))]
+
+Regression_OLS_withinteraction<-lm(paste(Independant_variable,"~",paste(Dependant_variables_without_car,collapse=" + "),"+Car_ownership*Enjoy_Auto",sep=""),
+                                    data=Regression_dataset,
+                                    weights=P_GEW_num)
+
+
+
+Regression_Quantile_tau50_withinteraction<-rq(paste(Independant_variable,"~",paste(Dependant_variables_without_car,collapse=" + "),"+Car_ownership*Enjoy_Auto",sep=""),
+                                              data=Regression_dataset,
+                                              tau=c(0.5),
+                                              weights=P_GEW_num)
+
+
+Regression_Quantile_tau75_withinteraction<-rq(paste(Independant_variable,"~",paste(Dependant_variables_without_car,collapse=" + "),"+Car_ownership*Enjoy_Auto",sep=""),
+                                              data=Regression_dataset,
+                                              tau=c(0.75),
+                                              weights=P_GEW_num)
+
+
+Regression_Quantile_tau90_withinteraction<-rq(paste(Independant_variable,"~",paste(Dependant_variables_without_car,collapse=" + "),"+Car_ownership*Enjoy_Auto",sep=""),
+                                              data=Regression_dataset,
+                                              tau=c(0.90),
+                                              weights=P_GEW_num)
+
+
+
+stargazer(Regression_OLS_withinteraction,Regression_Quantile_tau50_withinteraction,Regression_Quantile_tau75_withinteraction,Regression_Quantile_tau90_withinteraction, 
           intercept.bottom = FALSE,
           digits=0,
           rq.se="nid",
@@ -249,7 +136,74 @@ stargazer(Regression_OLS,Regression_Quantile_tau50,Regression_Quantile_tau75,Reg
           column.sep.width = "0.5pt",
           dep.var.labels.include = TRUE)
 
+}
 
+
+# CART trees:
+
+Regression_dataset$Top_10<-Regression_dataset[Independant_variable][,1]>wtd.quantile(Regression_dataset[Independant_variable][,1],0.90,na.rm=T,weight=Regression_dataset$P_GEW_num)
+
+
+model_tree<-rpart(paste("Top_10","~",paste(Dependant_variables,collapse=" + ")),
+                  data=Regression_dataset,
+                  method="anova",
+                  cp=10**-3,
+                  minbucket=100,
+                  weights=P_GEW_num)
+
+pdf(paste("Trees/Model_tree_",Independant_variable,suffix_add_control,".pdf",sep=""))
+rpart.plot(model_tree,extra=1)
+dev.off()
+
+
+
+# Trying PRIM analysis ----
+if (FALSE){
+PRIM_dataset<-Regression_dataset
+
+PRIM_dataset$Top_10<-PRIM_dataset$Total_emissions_wout_RW>wtd.quantile(PRIM_dataset$Total_emissions_wout_RW,0.90,na.rm=T,weight=Regression_dataset$P_GEW_num)
+
+#for (variable_name in colnames(Regression_dataset)){
+
+for (variable_name in Dependant_variables){
+    
+  for (possible_result in unique(PRIM_dataset[variable_name])[,1]){
+    var_name<-paste(variable_name,possible_result,sep="")
+    PRIM_dataset<-PRIM_dataset%>%
+      mutate(!!var_name := as.numeric(as.logical((get(variable_name)==possible_result))))
+  }
+  
+}
+
+PRIM_dataset<-PRIM_dataset%>%
+  select(-Dependant_variables)%>%
+  select(-P_GEW_num)%>%
+  select(-Total_emissions_wout_RW)
+
+PRIM_dataset<-PRIM_dataset%>%
+  mutate(Top_10=as.numeric(Top_10))
+
+write.csv(PRIM_dataset,file="PRIM_dataset.csv")
+
+#sdprim(x=subset(PRIM_dataset,select=-c(Total_emissions_wout_RW,Top_10)),y=PRIM_dataset$Top_10)
+
+sdprim(x=subset(PRIM_dataset,select=c(Age7,Age6,Age8)),
+       y=PRIM_dataset$Top_10,
+       thresh=0.5)
+
+
+sd.start()
+
+PRIM.prim<-prim.box(x=subset(PRIM_dataset,select=-c(Total_emissions_wout_RW,Top_10)),
+                    y=PRIM_dataset$Top_10,
+                    threshold=0.5,
+                    threshold.type=1)
+
+PRIM.prim
+
+summary(PRIM.prim)
+
+}
 #}
 
 

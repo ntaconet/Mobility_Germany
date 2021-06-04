@@ -24,6 +24,8 @@ library(randomForest)
 library(lawstat) # for plotting a lorenz curve (but function doesn't work...)
 library(ineq) # for plotting a lorenz curve
 library(stargazer)
+library(prim) # for PRIM analysis?
+library(sdtoolkit) # for PRIM analysis
 
 # Create Output folder
 dir.create("Output")
@@ -59,8 +61,6 @@ source("build_person_dataset.R")
 ########################################
 # STEP 4 : Regressions
 #######################################
-
-
 
 #source("quantile_regressions.R")
 
