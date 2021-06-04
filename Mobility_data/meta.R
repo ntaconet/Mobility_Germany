@@ -62,6 +62,14 @@ source("build_person_dataset.R")
 # STEP 4 : Regressions
 #######################################
 
-#source("quantile_regressions.R")
+source("prepare_regression_dataset.R")
+
+
+
+########################################
+# STEP 5 : Prepare table for the regression
+#######################################
+
+source("quantile_regressions.R")
 
 
