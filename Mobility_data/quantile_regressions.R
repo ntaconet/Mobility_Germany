@@ -1,4 +1,26 @@
 
+table_variables<-read_excel(paste("Other_input/Table_Dependent_Variables_",regression_type,".xlsx",sep=""))
+
+Variables_tokeep<-subset(table_variables,type %in% c("main","control","attitude","accessibility","other") & include==1 | (add_control_bool==T & varname %in% add_control))
+Dependant_variables<-Variables_tokeep$label
+
+
+if (FALSE){
+# Make sure we add this later to 
+# Lorenz curve ----
+
+# 
+data_lorenzcurve<-subset(Person_dataset,is.na(Total_emissions_wout_RW)==F)
+
+#lorenz.curve(data=data_lorenzcurve[1:100,c("Total_emissions_wout_RW","P_GEW_num")])
+
+plot(Lc(data_lorenzcurve$Total_emissions_wout_RW,n=data_lorenzcurve$P_GEW_num))
+
+plot(Lc(data_lorenzcurve$emissions_reise,n=data_lorenzcurve$P_GEW_num))
+
+unique(Person_dataset$ST_MONAT_grouped)
+}
+
 
 #Regression_OLS<-lm(paste(Independant_variable,"~",paste(Dependant_variables,collapse=" + ")),
 Regression_OLS<-lm(paste(Independant_variable,"~",paste(Dependant_variables,collapse=" + ")),
@@ -7,18 +29,18 @@ Regression_OLS<-lm(paste(Independant_variable,"~",paste(Dependant_variables,coll
 
 stargazer(car::vif(Regression_OLS))
 
-pdf(paste("Robustness_graphs/Robustnesscheck_",Independant_variable,suffix_add_control,".pdf",sep=""))
+pdf(paste("Robustness_graphs/Robustnesscheck_",Name_Regression,".pdf",sep=""))
 par(mfrow = c(2, 2))
 plot(Regression_OLS)
 dev.off()
 
 # plot normality
-pdf(paste("Robustness_graphs/Normality_",Independant_variable,suffix_add_control,".pdf",sep=""))
+pdf(paste("Robustness_graphs/Normality_",Name_Regression,".pdf",sep=""))
 plot(Regression_OLS,2)
 dev.off()
 
 # plot heteroscedasticity
-pdf(paste("Robustness_graphs/Heteroscedasticity_",Independant_variable,suffix_add_control,".pdf",sep=""))
+pdf(paste("Robustness_graphs/Heteroscedasticity_",Name_Regression,".pdf",sep=""))
 plot(Regression_OLS,3)
 dev.off()
 
@@ -31,114 +53,74 @@ Regression_Quantile_tau90<-rq(paste(Independant_variable,"~",paste(Dependant_var
                               weights=P_GEW_num)
 
 #summary.rq(Regression_Quantile_tau90)
-
-Regression_Quantile_tau75<-rq(paste(Independant_variable,"~",paste(Dependant_variables,collapse=" + ")),
-                              data=Regression_dataset,
-                              tau=c(0.75),
-                              weights=P_GEW_num)
-
-
-Regression_Quantile_tau50<-rq(paste(Independant_variable,"~",paste(Dependant_variables,collapse=" + ")),
-                              data=Regression_dataset,
-                              tau=c(0.5),
-                              weights=P_GEW_num)
-
-
-#Regression_OLS
-
-#export_summs(Regression_OLS,Regression_Quantile_tau50,Regression_Quantile_tau75,Regression_Quantile_tau90, 
- #             model.names = c("OLS","Quantile (50%)","Quantile (75%)","Quantile (90%)"),
-  #            to.file = "docx", file.name = paste("Output_regressions/",as.character(Independant_variable),"_",regression_type,"_",suffix_add_control,".docx"),sep="")
-              #to.file = "docx", file.name = paste("Output_regressions/",as.character(Independant_variable),"_without","_Comparing_OLS_to_Quantile.docx"),sep="")
-
-
-
-# Let's try to look at the effect of not having a car:
-# Create a variable that does that.
-
-
-
-#if (FALSE){
-
-# for flugzeug only show 90th percentile
-#stargazer(Regression_OLS,Regression_Quantile_tau90, 
-
-# otherwise all:
-stargazer(Regression_OLS,Regression_Quantile_tau50,Regression_Quantile_tau75,Regression_Quantile_tau90, 
-          intercept.bottom = FALSE,
-          digits=0,
-          rq.se="boot",
-          
-          #rq.se="nid",
-          #ci=TRUE,
-          #ci.level=0.90,
-          style = "aer",
-          title="Quantile Regression Results",
-          align=TRUE,
-          dep.var.caption  = "",
-          model.numbers = TRUE
-          ,  t.auto = TRUE, p.auto = TRUE,
-          font.size="scriptsize", keep.stat="aic",
-          dep.var.labels   = "",
-          multicolumn = TRUE,
-          single.row = TRUE,
-          #,omit.stat=c("f", "ser"),
-          column.sep.width = "0.5pt",
-          dep.var.labels.include = TRUE)
-
-if (FALSE){
-
-# remove car variables: 
-Dependant_variables_without_car<-Dependant_variables[!(Dependant_variables %in% c("Enjoy_Auto","Car_ownership"))]
-
-Regression_OLS_withinteraction<-lm(paste(Independant_variable,"~",paste(Dependant_variables_without_car,collapse=" + "),"+Car_ownership*Enjoy_Auto",sep=""),
-                                    data=Regression_dataset,
-                                    weights=P_GEW_num)
-
-
-
-Regression_Quantile_tau50_withinteraction<-rq(paste(Independant_variable,"~",paste(Dependant_variables_without_car,collapse=" + "),"+Car_ownership*Enjoy_Auto",sep=""),
-                                              data=Regression_dataset,
-                                              tau=c(0.5),
-                                              weights=P_GEW_num)
-
-
-Regression_Quantile_tau75_withinteraction<-rq(paste(Independant_variable,"~",paste(Dependant_variables_without_car,collapse=" + "),"+Car_ownership*Enjoy_Auto",sep=""),
-                                              data=Regression_dataset,
-                                              tau=c(0.75),
-                                              weights=P_GEW_num)
-
-
-Regression_Quantile_tau90_withinteraction<-rq(paste(Independant_variable,"~",paste(Dependant_variables_without_car,collapse=" + "),"+Car_ownership*Enjoy_Auto",sep=""),
-                                              data=Regression_dataset,
-                                              tau=c(0.90),
-                                              weights=P_GEW_num)
-
-
-
-stargazer(Regression_OLS_withinteraction,Regression_Quantile_tau50_withinteraction,Regression_Quantile_tau75_withinteraction,Regression_Quantile_tau90_withinteraction, 
-          intercept.bottom = FALSE,
-          digits=0,
-          rq.se="nid",
-          #ci=TRUE,
-          #ci.level=0.90,
-          style = "aer",
-          title="Quantile Regression Results",
-          align=TRUE,
-          dep.var.caption  = "",
-          model.numbers = TRUE
-          ,  t.auto = TRUE, p.auto = TRUE,
-          font.size="scriptsize", keep.stat="aic",
-          dep.var.labels   = "",
-          multicolumn = TRUE,
-          single.row = TRUE,
-          #,omit.stat=c("f", "ser"),
-          column.sep.width = "0.5pt",
-          dep.var.labels.include = TRUE)
-
+if (Independant_variable!="emissions_flugzeug"){
+  Regression_Quantile_tau75<-rq(paste(Independant_variable,"~",paste(Dependant_variables,collapse=" + ")),
+                                data=Regression_dataset,
+                                tau=c(0.75),
+                                weights=P_GEW_num)
+  
+  
+  Regression_Quantile_tau50<-rq(paste(Independant_variable,"~",paste(Dependant_variables,collapse=" + ")),
+                                data=Regression_dataset,
+                                tau=c(0.5),
+                                weights=P_GEW_num)
+  
 }
 
 
+# for flugzeug only show 90th percentile
+
+# otherwise all:
+if (Independant_variable=="emissions_flugzeug"){
+  stargazer(Regression_OLS,Regression_Quantile_tau90, 
+            intercept.bottom = FALSE,
+            digits=0,
+            rq.se="boot",
+            label=Name_Regression,
+            #rq.se="nid",
+            #ci=TRUE,
+            #ci.level=0.90,
+            style = "aer",
+            title=Title_Table,
+            align=TRUE,
+            dep.var.caption  = "",
+            model.numbers = TRUE
+            ,  t.auto = TRUE, p.auto = TRUE,
+            font.size="scriptsize", keep.stat="aic",
+            dep.var.labels   = "",
+            multicolumn = TRUE,
+            single.row = TRUE,
+            #,omit.stat=c("f", "ser"),
+            column.sep.width = "0.5pt",
+            dep.var.labels.include = TRUE,
+            out=paste("Output_regressions/regression_",Name_Regression,".tex",sep=""))
+}
+if (Independant_variable!="emissions_flugzeug"){
+  
+  stargazer(Regression_OLS,Regression_Quantile_tau50,Regression_Quantile_tau75,Regression_Quantile_tau90, 
+            intercept.bottom = FALSE,
+            digits=0,
+            rq.se="boot",
+            label=Name_Regression,
+            #rq.se="nid",
+            #ci=TRUE,
+            #ci.level=0.90,
+            style = "aer",
+            title=Title_Table,
+            align=TRUE,
+            dep.var.caption  = "",
+            model.numbers = TRUE
+            ,  t.auto = TRUE, p.auto = TRUE,
+            font.size="scriptsize", keep.stat="aic",
+            dep.var.labels   = "",
+            multicolumn = TRUE,
+            single.row = TRUE,
+            #,omit.stat=c("f", "ser"),
+            column.sep.width = "0.5pt",
+            dep.var.labels.include = TRUE,
+            out=paste("Output_regressions/regression_",Name_Regression,".tex",sep=""))
+
+}
 # CART trees:
 
 Regression_dataset$Top_10<-Regression_dataset[Independant_variable][,1]>wtd.quantile(Regression_dataset[Independant_variable][,1],0.90,na.rm=T,weight=Regression_dataset$P_GEW_num)
@@ -151,7 +133,7 @@ model_tree<-rpart(paste("Top_10","~",paste(Dependant_variables,collapse=" + ")),
                   minbucket=100,
                   weights=P_GEW_num)
 
-pdf(paste("Trees/Model_tree_",Independant_variable,suffix_add_control,".pdf",sep=""))
+pdf(paste("Trees/Model_tree_",Name_Regression,".pdf",sep=""))
 rpart.plot(model_tree,extra=1)
 dev.off()
 

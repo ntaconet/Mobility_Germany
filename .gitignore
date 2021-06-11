@@ -1,0 +1,55 @@
+
+Mobility_data/CSV/MiD2017_Wege.csv
+Mobility_data/CSV/MiD2017_Reisen.csv
+Mobility_data/CSV/MiD2017_Personen.csv
+Mobility_data/CSV/MiD2017_Haushalte.csv
+Mobility_data/CSV/MiD2017_Etappen.csv
+Mobility_data/CSV/MiD2017_Autos.csv
+Mobility_data/Codepläne/Thumbs.db
+Mobility_data/Codepläne/MiD2017_Codepläne_B1_Standard.xlsx
+Mobility_data/Codepläne/MiD2017_Codepläne_B1_Standard.pdf
+*.pdf
+*.png
+Mobility_data/Output/Person_dataset.csv
+Mobility_data/Output/Person_emissions.csv
+Mobility_data/.Rhistory
+Mobility_data/B1_Standard-Datensatzpaket.zip
+Mobility_data/file86470d774e4.log
+Mobility_data/file8647cdc142.log
+Mobility_data/Output_regressions/ emissions_RL _ basic _ P_ZUF .docx
+Mobility_data/Output_regressions/ emissions_RL _ basic _ P_NUTZ_RAD .docx
+Mobility_data/Output_regressions/ emissions_RL _ basic _ P_NUTZ .docx
+Mobility_data/Output_regressions/ emissions_RL _ basic _ P_EINVM_NUTZ .docx
+Mobility_data/Output_regressions/ emissions_RL _ basic _ P_EINVM .docx
+Mobility_data/Output_regressions/ emissions_RL _ basic _ emissions_wege .docx
+Mobility_data/Output_regressions/ emissions_RL _ basic _ compensation .docx
+Mobility_data/Output_regressions/ emissions_RL _ basic _  .docx
+Mobility_data/Output_regressions/ emissions_flugzeug _ basic _  .docx
+Mobility_data/Output_regressions/ emissions_RL _Comparing_OLS_to_Quantile.docx
+Mobility_data/Output_regressions/ emissions_wege _ basic _ P_EINVM .docx
+Mobility_data/Output_regressions/ Total_emissions_wout_RW _ basic _  .docx
+Mobility_data/Output_regressions/ Total_emissions_wout_RW _ basic _ compensation .docx
+Mobility_data/Output_regressions/ Total_emissions_wout_RW _ basic _ emissions_wege .docx
+Mobility_data/Output_regressions/ Total_emissions_wout_RW _ basic _ P_EINVM .docx
+Mobility_data/Output_regressions/ Total_emissions_wout_RW _ basic _ P_EINVM_NUTZ .docx
+Mobility_data/Output_regressions/ Total_emissions_wout_RW _ basic _ P_NUTZ .docx
+Mobility_data/Output_regressions/ Total_emissions_wout_RW _ basic _ P_ZUF .docx
+Mobility_data/Output_regressions/ Total_emissions_wout_RW _Comparing_OLS_to_Quantile.docx
+Mobility_data/Output_regressions/emissions_RL _ basic _  .docx
+Mobility_data/Output_regressions/Total_emissions_wout_RW _ basic _ 2 .docx
+Mobility_data/Output_regressions/Total_emissions_wout_RW _ basic _ copie .docx
+Mobility_data/Output_regressions/~$missions_RL _ basic _ compensation .docx
+Mobility_data/Output_regressions/~$missions_RL _ basic _ P_EINVM .docx
+Mobility_data/Output_regressions/~$missions_RL _ basic _ P_EINVM_NUTZ .docx
+Mobility_data/Output_regressions/~$otal_emissions_wout_RW _ basic _ P_EINVM_NUTZ .docx
+Mobility_data/Output_regressions/ emissions_RL _Comparing_OLS_to_Quantile.docx
+Mobility_data/Output_regressions/ Total_emissions_wout_RW _Comparing_OLS_to_Quantile.docx
+Mobility_data/PRIM_dataset.csv
+Mobility_data/PRIM_python/ema_workbenc.py
+Mobility_data/PRIM_python/ema_workbenc_sustainable.py
+Mobility_data/PRIM_python/example_celine_nicolas.py
+Mobility_data/PRIM_python/Regression_dataset.csv
+Mobility_data/Output_regressions/ emissions_RL _Comparing_OLS_to_Quantile.docx
+Mobility_data/Output_regressions/ Total_emissions_wout_RW _Comparing_OLS_to_Quantile.docx
+Mobility_data/Regression_dataset.csv
+Mobility_data/Quantile_Regression_Toread.docx

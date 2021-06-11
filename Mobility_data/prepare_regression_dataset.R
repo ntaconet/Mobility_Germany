@@ -1,46 +1,5 @@
 
-# first let's choose independant variable and.
-
-# emissions_RL stands for emissions from Reise Leisure
-#Independant_variable<-"emissions_RL"
-
-# If we want to look at total emissions wout Reise for work?
-#Independant_variable<-"Total_emissions_wout_RW"
-
-# emissions for everyday life outside leisure:
-#Independant_variable<-"emissions_wege"
-
-#If we want emissions from flugzeug
-Independant_variable<-"emissions_flugzeug"
-
-#suffix<-"without_emissions_commute"
-
-################
-# Import variable table ----
-################
-
-regression_type<-"basic"
-
-
-# Whether to add control or not.
-add_control_bool<-FALSE
-
-add_control<-c("P_NUTZ_RAD","P_NUTZ_OPNV")
-#add_control<-"emissions_wege"
-#add_control<-c("P_NUTZ_RAD","P_NUTZ_OPNV","P_NUTZ_AUTO")
-#add_control<-c(add_control,"P_EINVM_RAD","P_EINVM_AUTO","P_EINVM_OPNV","P_EINVM_FUSS")
-#add_control<-c("P_ZUF_RAD","P_ZUF_AUTO","P_ZUF_OPNV","P_ZUF_FUSS")
-
-suffix_add_control<-""
-if (add_control_bool==T){
-  #suffix_add_control<-add_control
-  suffix_add_control<-"compensation"
-}
-
-
-
 Person_dataset<-read.csv("Output/Person_dataset.csv")
-
 
 # making sure variable types are correct
 
@@ -49,23 +8,10 @@ Person_dataset<-Person_dataset%>%
   filter(alter_gr1 %in% c(5:9))# remove ppl below 18 years old
          #relevel(ST_MONAT,ref=10)) #  
 
-# Lorenz curve ----
-
-# 
-data_lorenzcurve<-subset(Person_dataset,is.na(Total_emissions_wout_RW)==F)
-
-#lorenz.curve(data=data_lorenzcurve[1:100,c("Total_emissions_wout_RW","P_GEW_num")])
-
-plot(Lc(data_lorenzcurve$Total_emissions_wout_RW,n=data_lorenzcurve$P_GEW_num))
-
-plot(Lc(data_lorenzcurve$emissions_reise,n=data_lorenzcurve$P_GEW_num))
-
-
-
-unique(Person_dataset$ST_MONAT_grouped)
-
 # Import a table, which contains the different variables to be used in the regression 
 # In the table, variables are classified, and each line specifies values to remove (corresponding to no Answer, NA...).
+regression_type<-"basic"
+
 table_variables<-read_excel(paste("Other_input/Table_Dependent_Variables_",regression_type,".xlsx",sep=""))
 
 ################
@@ -75,22 +21,14 @@ table_variables<-read_excel(paste("Other_input/Table_Dependent_Variables_",regre
 Weights<-"P_GEW_num"
 
 # Choose the dependent variables
-Variables_tokeep<-subset(table_variables,type %in% c("main","control","attitude","accessibility","other") & include==1 | (add_control_bool==T & varname %in% add_control))
+#Variables_tokeep<-table_variables
+Variables_tokeep<-subset(table_variables,varname!="H_NOCAR_B")
+#Variables_tokeep<-subset(table_variables,include==1 | type=="control")
+#Variables_tokeep<-subset(table_variables,type %in% c("main","control","attitude","accessibility","other") & include==1 | (add_control_bool==T & varname %in% add_control))
 #Variables_tokeep<-subset(table_variables,type %in% c("main","control","accessibility","other"))
 
 
-# Change the values for some
 if (FALSE){
-for (var0 in Variables_tokeep$change){
-  legend_answers<-read_excel(paste("Other_input/legend_",varname[i],".xlsx",sep=""),col_names=c("Code","Meaning"))
-  
-  # Create variable containing meaning of answer
-  Person_withoutoutliers<-Person_dataset%>%
-    mutate(answer_meaning=factor(legend_answers$Meaning[match(get(varname),legend_answers$Code)],levels=legend_answers$Meaning))
-  
-}
-}
-
 Dependant_variables<-Variables_tokeep$label
 
 Regression_dataset<-Person_dataset%>%
@@ -98,10 +36,13 @@ Regression_dataset<-Person_dataset%>%
          Variables_tokeep$varname,
          Weights)%>%
   na.omit()
+}
 
-Regression_dataset<-Regression_dataset%>%
+# rename some of the variables we will need
+#Regression_dataset<-Regression_dataset%>%
+
+Regression_dataset<-Person_dataset%>%
   rename_at(vars(as.character(Variables_tokeep$varname)),~as.character(Variables_tokeep$label))
-
 
 # Remove answers corresponding to "No answer"
 for (i in 1:nrow(Variables_tokeep)){
@@ -158,16 +99,16 @@ for (var0 in c("Enjoy_Biking","Enjoy_Car","Enjoy_PublicTransport")){
   Regression_dataset[var0][,1]<-factor(Regression_dataset[var0][,1],levels=Enjoyment_levels$value)
 }
 
-if ("Frequency_Bike" %in% Dependant_variables){
+#if ("Frequency_Bike" %in% Dependant_variables){
   
-  for (var0 in Dependant_variables[substr(Dependant_variables,1,4)=="Freq"])
-  # rename levels: from 1 (daily) to 5 (almost never)
-  Use_levels<-data.frame(value=c("Almost never","Less than monthly","1-3x by month","1-3x by week","Daily"),code=c("5","4","3","2","1"))
-  
-  Regression_dataset[var0][,1]<-Use_levels$value[match(Regression_dataset[var0][,1],Use_levels$code)]
-  Regression_dataset[var0][,1]<-factor(Regression_dataset[var0][,1],levels=Use_levels$value)
-  
+for (var0 in subset(table_variables,substr(label,1,4)=="Freq")$label){
+# rename levels: from 1 (daily) to 5 (almost never)
+Use_levels<-data.frame(value=c("Almost never","Less than monthly","1-3x by month","1-3x by week","Daily"),code=c("5","4","3","2","1"))
+
+Regression_dataset[var0][,1]<-Use_levels$value[match(Regression_dataset[var0][,1],Use_levels$code)]
+Regression_dataset[var0][,1]<-factor(Regression_dataset[var0][,1],levels=Use_levels$value)
 }
+#}
 
 Gender_levels<-c("Man","Woman")
 
