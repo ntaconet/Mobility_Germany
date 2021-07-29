@@ -1,12 +1,15 @@
 
 Person_dataset<-read.csv("Output/Person_dataset.csv")
 
+sum(!is.na(Person_dataset$emissions_RL))
+
 # making sure variable types are correct
 
 Person_dataset<-Person_dataset%>%
   mutate(P_GEW_num=as.numeric(gsub(",",".",as.character(P_GEW))))%>% # weights should be numeric
   filter(alter_gr1 %in% c(5:9))# remove ppl below 18 years old
          #relevel(ST_MONAT,ref=10)) #  
+
 
 # Import a table, which contains the different variables to be used in the regression 
 # In the table, variables are classified, and each line specifies values to remove (corresponding to no Answer, NA...).
@@ -22,11 +25,10 @@ Weights<-"P_GEW_num"
 
 # Choose the dependent variables
 #Variables_tokeep<-table_variables
-Variables_tokeep<-subset(table_variables,varname!="H_NOCAR_B")
-#Variables_tokeep<-subset(table_variables,include==1 | type=="control")
+#Variables_tokeep<-subset(table_variables,varname!="H_NOCAR_B")
+Variables_tokeep<-subset(table_variables,remove_na==1)
 #Variables_tokeep<-subset(table_variables,type %in% c("main","control","attitude","accessibility","other") & include==1 | (add_control_bool==T & varname %in% add_control))
 #Variables_tokeep<-subset(table_variables,type %in% c("main","control","accessibility","other"))
-
 
 if (FALSE){
 Dependant_variables<-Variables_tokeep$label
@@ -44,12 +46,7 @@ Regression_dataset<-Person_dataset%>%
 Regression_dataset<-Person_dataset%>%
   rename_at(vars(as.character(Variables_tokeep$varname)),~as.character(Variables_tokeep$label))
 
-# Remove answers corresponding to "No answer"
-for (i in 1:nrow(Variables_tokeep)){
-  print(Variables_tokeep$varname[i])
-  Regression_dataset<-Regression_dataset%>%
-    filter(get(Variables_tokeep$label[i])<Variables_tokeep$remove_above[i])
-}
+
 
 # Change a few labels:
 
@@ -98,6 +95,17 @@ for (var0 in c("Enjoy_Biking","Enjoy_Car","Enjoy_PublicTransport")){
   Regression_dataset[var0][,1]<-Enjoyment_levels$value[match(Regression_dataset[var0][,1],Enjoyment_levels$code)]
   Regression_dataset[var0][,1]<-factor(Regression_dataset[var0][,1],levels=Enjoyment_levels$value)
 }
+
+Satisfaction_levels<-data.frame(value=c("Insufficient","Deficient","Sufficient","Satisfying","Good","Very Good"),
+                                code=c("6","5","4","3","2","1"))
+
+
+for (var0 in c("Satisfaction_Bike","Satisfaction_Auto","Satisfaction_PublicTransport")){
+  Regression_dataset[var0][,1]<-Satisfaction_levels$value[match(Regression_dataset[var0][,1],Satisfaction_levels$code)]
+  Regression_dataset[var0][,1]<-factor(Regression_dataset[var0][,1],levels=Satisfaction_levels$value)
+}
+
+
 
 #if ("Frequency_Bike" %in% Dependant_variables){
   
@@ -158,7 +166,7 @@ Regression_dataset<-Regression_dataset%>%
   mutate(Age=factor(Age,levels=Age_levels))
 
 
-write.csv(Regression_dataset,"Regression_dataset.csv",row.names = F)
+#write.csv(Regression_dataset,"Regression_dataset.csv",row.names = F)
 
 # Descriptive graph for days:
 
@@ -176,7 +184,6 @@ ggplot(data=Regression_dataset,aes(x=factor(ST_MONAT),y=emissions_reise))+
   coord_cartesian(ylim=c(0,10**3))
 }
 
-#dir.create("Descriptive_graphs")
 if (FALSE){
 Regression_dataset<-Regression_dataset%>%
   mutate(Month=case_when(Month %in% c(1,2,3,4) ~ "1_low",
@@ -188,22 +195,4 @@ Regression_dataset<-Regression_dataset%>%
                             Weekday %in% c(7) ~ "3_Sunday"))%>%
   mutate(Weekday=factor(Weekday))
 
-}
-
-#Regression_dataset<-Regression_dataset%>%
-  #mutate_if(sapply(Regression_dataset, is.integer), as.factor)#%>%
-  #mutate_if(sapply(Regression_dataset, is.character), as.factor)
-
-
-#summary(subset(Regression_dataset,select=-c(P_GEW_num)),percent="column")
-#stargazer(Regression_dataset)
-
-if (FALSE){
-Regression_Quantile<-rq(paste(Independant_variable,"~",paste(Dependant_variables,collapse=" + ")),
-                        data=Regression_dataset,
-                        tau=c(0.25,0.5,0.75,0.9),
-                        weights=P_GEW_num)
-
-
-Regression_Quantile
 }

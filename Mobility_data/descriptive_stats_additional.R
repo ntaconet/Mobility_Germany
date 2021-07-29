@@ -15,9 +15,15 @@ data_lorenzcurve<-subset(Person_dataset,is.na(Total_emissions_wout_RW)==F)
 
 #lorenz.curve(data=data_lorenzcurve[1:100,c("Total_emissions_wout_RW","P_GEW_num")])
 
-plot(Lc(data_lorenzcurve$Total_emissions_wout_RW,n=data_lorenzcurve$P_GEW_num))
+pdf("Descriptive_graphs/Lorenz_total_emissions.pdf")
+plot(Lc(data_lorenzcurve$Total_emissions_wout_RW,n=data_lorenzcurve$P_GEW_num),main="Total emissions",xlab="Share of population",ylab="Share of emissions")
+grid(nx=10,ny=10)
+dev.off()
 
-plot(Lc(data_lorenzcurve$emissions_reise,n=data_lorenzcurve$P_GEW_num))
+pdf("Descriptive_graphs/Lorenz_reisen_emissions.pdf")
+plot(Lc(data_lorenzcurve$emissions_reise,n=data_lorenzcurve$P_GEW_num),main="Long-distance emissions",xlab="Share of population",ylab="Share of emissions")
+grid(nx=10,ny=10)
+dev.off()
 
 
 # Plot share for different quantiles of emissions.
@@ -57,8 +63,23 @@ plot<-ggplot(data=data_mean)+
   geom_bar(aes(Q_cut,Total_emissions/1000,fill="Long-distance emissions"),stat="identity")+
   geom_bar(aes(Q_cut,Emissions_wege/1000,fill="Daily emissions"),stat="identity")+
   scale_x_discrete(name="Quantile",labels=as.character(c(3:10)))+
-  labs(y="Annual emissions (tCO2e)",fill=" ")
+  labs(y="Annual emissions (tCO2e)",fill=" ")+
+  scale_fill_viridis_d()+
+  theme_bw()
 
 plot
 ggsave("Descriptive_graphs/Total_emissions.png",plot=plot)  
+
+
+plot<-ggplot(data=data_mean)+
+  geom_bar(aes(Q_cut,Total_emissions/1000,fill="Long-distance emissions"),stat="identity")+
+  geom_bar(aes(Q_cut,Emissions_wege/1000,fill="Daily emissions"),stat="identity")+
+  scale_x_discrete(name="Quantile",labels=as.character(c(3:10)))+
+  labs(y="Annual emissions (tCO2e)",fill=" ")+
+  scale_fill_viridis_d()
+theme_bw()
+
+plot
+ggsave("Descriptive_graphs/Total_emissions_share.png",plot=plot)  
+
 

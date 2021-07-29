@@ -1,11 +1,10 @@
 
 # Calculate emissions for each travel ---------
 
-
-
 # Import emission factor data
 Emission_factors_UBA <- read_excel("Other_input/Emission_Factors_UBA.xlsx")
 Emission_factors_HBEFA <- read_excel("Other_input/Emission_Factors_HBEFA.xlsx")
+Emission_factors_Flugzeug_UBA <- read_excel("Other_input/Emission_Factors_Flugzeug_UBA.xlsx")
 
 # Retain UBA data
 Emission_factors<-Emission_factors_UBA%>%
@@ -20,6 +19,9 @@ Emission_factors<-Emission_factors_UBA%>%
                         EF_Fzkm))%>%
   mutate(EF=as.numeric(EF),EF_Fzkm=as.numeric(EF_Fzkm))%>%
   select(Label,varname,EF,EF_Fzkm)#%>%
+
+Emission_factors_Flugzeug_UBA<-Emission_factors_Flugzeug_UBA%>%
+  mutate(EF_Flugzeug_UBA=as.numeric(EF_Flugzeug_UBA))
 
 # Emissions - Wege -----
 
@@ -49,16 +51,6 @@ Wege<-Wege%>%
   group_by(HP_ID)%>%
   arrange(W_ID,.by_group=TRUE)%>%
   mutate(W_ZWECK_filled=ifelse(W_ZWECK==9,lag(W_ZWECK),W_ZWECK))#%>%
-  # remove wege which: didn't start or didn't finish at home, and are more than 100km
-  # W_SO1: where first trip begins: 1: zu Hause / 2: anderer Ort /9: keine Angabe
-  # wegkm>100
-  #filter(W_SO1==2 & wegkm<100)
-
-# Checking how many NAs
-sum(is.na(Wege$emissions))
-
-
-
 
 # Emissions - Reise ----- 
 hvm_r_matching<-read_excel("Other_input/hvm_r_matching.xlsx")
@@ -80,11 +72,30 @@ Reisen<-Reisen%>%
                                                
                         # else, use Pkm
                         !(hvm_r %in% c(1)) ~ R_ENTF*Emission_factors$EF[match(hvm_r_matching$varname[hvm_r],Emission_factors$varname)]
+    # special case for aviation, with factor depending on the distance
+    # hvm_r=5, then use 
+    # () & ()
+    
     )
-    )
+    )%>%
+  filter(R_ZIEL!=9)%>%
+  mutate(Destination=ifelse(R_ZIEL==1,"inland","ausland"))%>%
+  mutate(EF_flugzeug=case_when(Destination=="inland" & R_ENTF<=500 ~ Emission_factors_Flugzeug_UBA$EF_Flugzeug_UBA[1],
+                               Destination=="inland" & R_ENTF > 500 ~ Emission_factors_Flugzeug_UBA$EF_Flugzeug_UBA[2],
+                               Destination=="ausland" & R_ENTF<=500 ~ Emission_factors_Flugzeug_UBA$EF_Flugzeug_UBA[3],
+                               Destination=="ausland" & R_ENTF>500 & R_ENTF<=1000 ~ Emission_factors_Flugzeug_UBA$EF_Flugzeug_UBA[4],
+                               Destination=="ausland" & R_ENTF>1000 & R_ENTF<=2000 ~ Emission_factors_Flugzeug_UBA$EF_Flugzeug_UBA[5],
+                               Destination=="ausland" & R_ENTF>2000 & R_ENTF<=5000 ~ Emission_factors_Flugzeug_UBA$EF_Flugzeug_UBA[6],
+                               Destination=="ausland" & R_ENTF>5000 & R_ENTF<=10000 ~ Emission_factors_Flugzeug_UBA$EF_Flugzeug_UBA[7],
+                               Destination=="ausland" & R_ENTF>10000 ~ Emission_factors_Flugzeug_UBA$EF_Flugzeug_UBA[8]))%>%
+  mutate(emissions=ifelse(hvm_r==5,
+                          R_ENTF*EF_flugzeug,
+                          emissions))
 
 # How many NAs?
-#sum(is.na(Reisen$emissions))
+sum(is.na(Reisen$emissions))
+
+esay<-subset(Reisen,R_ZIEL==9)
 
 # Plot the contribution of different transportation mode to total emissions ----
 
@@ -98,7 +109,7 @@ Wege_tokeep<-Wege%>%
   mutate(transportation_mode=case_when(hvm %in% c(1,2) ~ "Others",
                                        hvm %in% c(5) ~ "Public transportation",
                                        hvm %in% c(3,4) ~ "Car"))%>%
-  mutate(emissions=emissions*factor_wege)%>%
+  mutate(emissions=emissions*factor_wege*as.numeric(gsub(",",".",as.character(W_GEW))))%>%
   select(transportation_mode,emissions)%>%
   mutate(type_travel="Daily mobility")
            
@@ -108,8 +119,8 @@ Reisen_tokeep<-Reisen%>%
                                        hvm_r %in% c(3,4) ~ "Long-distance bus",
                                        hvm_r %in% c(5) ~ "Plane",
                                        hvm_r %in% c(6,7,8) ~ "Others"))%>%
-  mutate(emissions=emissions*factor_reisen)%>%
-  select(transportation_mode,emissions,HP_ID)%>%
+  mutate(emissions=emissions*factor_reisen*as.numeric(gsub(",",".",as.character(R_GEW))))%>%
+  select(transportation_mode,emissions)%>%
   mutate(type_travel="Long distance")
 
 all_travels<-rbind(Wege_tokeep,Reisen_tokeep)
@@ -121,16 +132,35 @@ all_travels_aggregated<-all_travels%>%
 all_travels_aggregated<-all_travels_aggregated%>%
   mutate(total=total/sum(all_travels_aggregated$total))
 
-
 ggplot(data=all_travels,aes(x=" ",y=emissions,fill=transportation_mode))+
   geom_bar(stat="identity",position="fill")
 
 
-plot_share_by_category<-ggplot(data=all_travels,aes(x=type_travel,y=emissions,fill=transportation_mode))+
+plot_share_by_category<-ggplot(data=all_travels,
+                               aes(x=type_travel,
+                                   y=emissions,
+                                   fill=transportation_mode))+
   geom_bar(stat="identity",position="fill")+
-  labs(y="Share of emissions",x="Type of travel",fill="Transportation mode")
+  labs(y="Share of emissions",x="Type of travel",fill="Transportation mode")+
+  theme_bw()#+
+  #scale_fill_brewer(palette="Set1")
 
-ggsave("share_emissions_by_category.png",plot=plot_share_by_category)
+plot_share_by_category
+
+ggsave("Descriptive_graphs/share_emissions_by_category.png",plot=plot_share_by_category)
+
+
+plot_share_by_category_total<-ggplot(data=all_travels,
+                               aes(x=" ",
+                                   y=emissions,
+                                   fill=transportation_mode))+
+  geom_bar(stat="identity",position="fill")+
+  labs(y="Share of emissions",x="",fill="Transportation mode")+
+  theme_bw()#+
+  #scale_fill_brewer(palette="Set1")
+
+ggsave("Descriptive_graphs/share_emissions_by_category_total.png",plot=plot_share_by_category_total)
+
 
 # Aggregate emissions at the person's level ---------
 
@@ -157,6 +187,7 @@ Reisen_Person<-Reisen%>%
             # nb of reported reisen (to correct if nb of Reise is >3)
             nb_reported_reisen=n()
             )
+sum(is.na(Reisen_Person$emissions_RL))
 
 # W_ZWECK CATEGORIES
 # Everyday leisure travels
@@ -190,9 +221,13 @@ Wege_Person<-Wege%>%
             nb_reported_wege=n()
             )
 
-Person_emissions<-merge(Reisen_Person,Wege_Person,all=T)
+Person_emissions<-Reisen_Person%>%
+  full_join(Wege_Person)
+
+#Person_emissions<-merge(Reisen_Person,Wege_Person,all=T)
 # Assign 0 value to NAs?
 
+sum(!is.na(Person_emissions$emissions_RL))
 
 write.csv(Person_emissions,"Output/Person_emissions.csv",row.names = F)
 

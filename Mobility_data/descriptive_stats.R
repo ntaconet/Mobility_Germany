@@ -8,15 +8,10 @@ dir.create("Descriptive_graphs")
 
 
 # Basic density plots
-
-ggplot(data=subset(Person_dataset))+
-  #geom_density(aes(x=Total_emissions),color="red")
-  geom_density(aes(x=emissions_wege/Total_emissions),color="black")
-
 # In this plot I will plot a few descriptive graphs to show relationship between long-distance Reise emissions and other variables
 
 # First, emissions from long-distance scatterplots against other emissions
-
+if (FALSE){
 #remove observations from the 20 highest emissions?
 percentile_remove<-0.90
 
@@ -51,6 +46,7 @@ plot<-ggplot(data=subset(Person_dataset),
 ggsave("Descriptive_graphs/leisure_wege.pdf",plot=plot)
 
 
+
 # Emissions from commute
 plot<-ggplot(data=subset(Person_dataset),
                          #emissions_RL < quantile(Person_dataset$emissions_RL,percentile_remove,na.rm=T) & 
@@ -71,7 +67,7 @@ ggsave("Descriptive_graphs/commute_wege.pdf",plot=plot)
 
 # correlation?
 data_cor<-cor(Person_dataset[c("emissions_RL","emissions_WE","emissions_WC","emissions_WL")],use="complete.obs")
-
+}
 
 # how many ppl are responsible for the top 10% of emissions
 
@@ -81,6 +77,8 @@ Top_10_RL<-Person_dataset%>%
 emissions_top10<-sum(Top_10_RL$emissions_RL*Top_10_RL$P_GEW_num)
 emissions_tot<-sum(Person_dataset$emissions_RL*Person_dataset$P_GEW_num,na.rm=T)
 Share_of_emissions<-emissions_top10/emissions_tot
+Share_of_emissions
+
 
 # Then emissions from long-distance reise against:
 name=c("Income","Education","Household_composition","Age","Enjoy_Biking","Gender","Rural_Urban","Month")
@@ -121,54 +119,5 @@ for (i in 1:length(name)){
   print(plot)
   dev.off()
 }
-
-
-################
-# Trying partitioning ----
-################
-
-table_variables<-data.frame(name=c("Income","Education","Household_composition","Age","Enjoy_Biking","Gender","Rural_Urban","Month","Emissions_commute","Car_ownership","Frequency_Bike"),
-                varname=c("hheink_gr2","P_BIL","hhgr_gr","alter_gr2","P_EINVM_RAD","HP_SEX","GEMTYP","ST_MONAT","emissions_WC","auto","P_NUTZ_RAD"))
-
-
-Dataset_withoutNAs<-Dataset_withoutNAs%>%
-  mutate(top_10_RL=emissions_RL>wtd.quantile(Person_dataset$emissions_RL,0.90,na.rm=T,weight=Person_dataset$P_GEW_num))%>%
-  mutate(top_20_RL=emissions_RL>wtd.quantile(Person_dataset$emissions_RL,0.80,na.rm=T,weight=Person_dataset$P_GEW_num))
-
-  
-Dataset_withoutNAs$ST_MONAT<-factor(Dataset_withoutNAs$ST_MONAT)
-
-Dataset_newvariables<-Dataset_withoutNAs%>%
-  rename_at(vars(as.character(table_variables$varname)),~as.character(table_variables$name))
-
-Dataset_newvariables$Age<-factor(Dataset_newvariables$Age)
-
-for (output_type in c("emissions_RL","emissions_reise","emissions_RW","emissions_flugzeug","top_10_RL","top_20_RL")){
-  model_tree<-rpart(paste(output_type,"~",paste(name,collapse=" + ")),
-                      data=Dataset_newvariables,
-                      method="anova",
-                      cp=10**-3,
-                      minbucket=100,
-                      weights=P_GEW_num)
-  
-  pdf(paste("Descriptive_graphs/Model_tree_",output_type,".pdf",sep=""))
-  rpart.plot(model_tree,extra=1)
-  dev.off()
-  
-}
-
-
-# Note: I didn't add Nebenwohnsitz because it's not in the Person dataset... (in the Haushalt one)
-
-#another thing would be to look at who is in the top 10% emitter
-
-
-pdf("Descriptive_graphs/Model_binary.pdf")
-rpart.plot(model_binary)
-dev.off()
-
-
-
-# let's plot a Lorenz Curve
 
 

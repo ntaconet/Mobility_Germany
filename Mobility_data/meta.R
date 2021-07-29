@@ -7,7 +7,9 @@ rm(list = ls())
 # Set directory:
 setwd("~/GitHub/Mobility_Germany/Mobility_data")
 
-
+library(vtable)
+library(ggstance)
+library(broom.mixed)
 # Import necessary library
 library(readxl) # to read excel files
 library(tidyverse) # lots of useful packages
@@ -55,7 +57,7 @@ source("build_person_dataset.R")
 #######################################
 
 #source("descriptive_stats.R")
-
+# we still need to add the Lorenz curve somewhere.
 
 
 ########################################
@@ -65,9 +67,20 @@ source("build_person_dataset.R")
 source("prepare_regression_dataset.R")
 
 ########################################
-# STEP 5 : Prepare table for the regression
+# STEP 5 : Summary Stats
+#######################################
+
+source("summary_stats.R")
+
+########################################
+# STEP 6 : Prepare table for the regression
 #######################################
 
 source("quantile_regressions_torun.R")
 
 
+########################################
+# STEP 6 : Compute the graph for quantile regression
+#######################################
+
+source("quantile_regressions_graph.R")
