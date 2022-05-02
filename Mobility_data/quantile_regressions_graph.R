@@ -42,9 +42,12 @@ Regression_Quantile_all<-rq(paste(Independant_variable,"~",paste(Dependant_varia
 
 pdf("Descriptive_graphs/Quantile_regression_graph.pdf")
 #plot.rqs(Regression_Quantile_all)
-plot.summary.rqs(summary(Regression_Quantile_all))
+plot.summary.rqs(summary(Regression_Quantile_all,parm=c(2,10)))
 dev.off()
 
+pdf("Descriptive_graphs/Quantile_regression_graph.pdf")
+plot(summary.rqs(Regression_Quantile_all),parm=c(2:15))
+dev.off()
 
 # 
 # 

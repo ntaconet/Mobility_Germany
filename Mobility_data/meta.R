@@ -53,11 +53,10 @@ source("calculate_emissions.R")
 source("build_person_dataset.R")
 
 ########################################
-# STEP 3 : Descriptive stat and graphs?
+# STEP 3 : Descriptive stat and graphs
 #######################################
 
 #source("descriptive_stats.R")
-# we still need to add the Lorenz curve somewhere.
 
 
 ########################################

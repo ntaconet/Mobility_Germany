@@ -47,7 +47,7 @@ Wege<-Wege%>%
                           (wegkm_num/(1+W_ANZBEGL))*Emission_factors$EF_Fzkm[match(hvm_diff2_matching$varname[hvm_diff2],Emission_factors$varname)],
                           # else, use Pkm
                           wegkm_num*Emission_factors$EF[match(hvm_diff2_matching$varname[hvm_diff2],Emission_factors$varname)]))%>%
-  # For the answer "Ruckweg vom vorherigen Weg", assign Zweck from previous travel 
+  # For the answer "Ruckweg vom vorherigen Weg", assign Zweck (purpose) from previous travel 
   group_by(HP_ID)%>%
   arrange(W_ID,.by_group=TRUE)%>%
   mutate(W_ZWECK_filled=ifelse(W_ZWECK==9,lag(W_ZWECK),W_ZWECK))#%>%
@@ -99,7 +99,7 @@ esay<-subset(Reisen,R_ZIEL==9)
 
 # Plot the contribution of different transportation mode to total emissions ----
 
-# emissions from wege should be multiplied by 365 (?)
+# emissions from wege should be multiplied by 365 days
 factor_wege<-365
 # emissions from Reisen should be multiplied by 4 (last three months)
 factor_reisen<-4

@@ -22,7 +22,7 @@ top_10<-wtd.quantile(Regression_dataset$Total_emissions_wout_RW,0.90,na.rm=T,wei
 Table_regressions_to_Run<-read_xlsx("Other_input/Table_Regressions_to_Run.xlsx")
 
 #for (reg_no in 1:nrow(Table_regressions_to_Run)){
-for (reg_no in 3:3){
+for (reg_no in 2:2){
   Independant_variable<-Table_regressions_to_Run$Independant_variable[reg_no]
   
   # Whether to add control or not.

@@ -49,12 +49,14 @@ summ_stats_Regression<-Regression_dataset_NoNA%>%
 
 sumtable(summ_stats_Regression,out='latex',file="Descriptive_graphs/summary_table_Regression.tex",title="Summary Stat, regression sample",fit.page=9)
 
-variables0_wout_enjoy<-subset(variables0,)
+#variables0_wout_enjoy<-subset(variables0,)
 
 summ_stats_wholesample<-Regression_dataset_wholesample%>%
   select(variables0$label)
 
 sumtable(summ_stats_wholesample,out='latex',file="Descriptive_graphs/summary_table_Wholesample.tex",title="Summary Stat, whole sample",fit.page=9)
+
+
 
 table_wholesample<-sumtable(summ_stats_wholesample,out='return')
 table_regressionsample<-sumtable(summ_stats_Regression,out='return')
