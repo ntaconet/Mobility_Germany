@@ -1,5 +1,11 @@
 dir.create("Output_regressions")
 
+# Quantiles -----
+wtd.quantile(Regression_dataset$Total_emissions_wout_RW,weights=Regression_dataset$P_GEW_num,probs=0.1*c(1:9))
+wtd.quantile(Regression_dataset$emissions_RL,weights=Regression_dataset$P_GEW_num,probs=0.1*c(1:9))
+wtd.quantile(Regression_dataset$emissions_flugzeug,weights=Regression_dataset$P_GEW_num,probs=c(0.1*c(1:9),0.95,0.99))
+
+
 # Regressions -----
 
 #Regression_dataset<-read.csv("Regression_dataset.csv")
@@ -22,7 +28,7 @@ top_10<-wtd.quantile(Regression_dataset$Total_emissions_wout_RW,0.90,na.rm=T,wei
 Table_regressions_to_Run<-read_xlsx("Other_input/Table_Regressions_to_Run.xlsx")
 
 #for (reg_no in 1:nrow(Table_regressions_to_Run)){
-for (reg_no in 2:2){
+for (reg_no in nrow(Table_regressions_to_Run)){
   Independant_variable<-Table_regressions_to_Run$Independant_variable[reg_no]
   
   # Whether to add control or not.
@@ -42,13 +48,23 @@ for (reg_no in 2:2){
   table_variables<-read_excel(paste("Other_input/Table_Dependent_Variables_",regression_type,".xlsx",sep=""))
   
   Variables_tokeep<-subset(table_variables,type %in% c("main","control","attitude","accessibility","other") & include==1 | (add_control_bool==T & varname %in% add_control))
+  additional_test<-""
+  
   
   # to remove
   #Variables_tokeep<-subset(Variables_tokeep,!substr(label,1,5)=="Enjoy")
   
   Dependant_variables<-Variables_tokeep$label
   
+  # Remove unemployment variable
+  #Dependant_variables<-Dependant_variables[Dependant_variables!="Employment"]
+  #additional_test<-"_noemployment"
   
+  
+  # Remove attitudinal variable
+  #Variables_tokeep<-subset(table_variables,type %in% c("main","control","accessibility","other") & include==1 | (add_control_bool==T & varname %in% add_control))
+  #Dependant_variables<-Variables_tokeep$label
+  #additional_test<-"_noattitude"
   
   source("quantile_regressions.R")
   

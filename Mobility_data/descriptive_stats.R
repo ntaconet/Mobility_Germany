@@ -118,6 +118,36 @@ for (i in 1:length(name)){
     theme(axis.text.x = element_text(angle = 90, hjust = 1))
   print(plot)
   dev.off()
+  
+  
+  pdf(paste("Descriptive_graphs/",name[i],"_flugzeug.pdf",sep=""))
+  
+  plot<-ggplot(data=new_dataset,aes(x=answer_meaning,
+                                    y=emissions_flugzeug,weight=as.numeric(P_GEW_num/sum_weights)))+
+    geom_boxplot()+
+    #geom_boxplot(draw_quantiles = c(0.5))+
+    ylim(0,wtd.quantile(Person_dataset$emissions_flugzeug,percentile_remove,na.rm=T,weight=Person_dataset$P_GEW_num))+
+    xlab(name[i])+
+    ylab("Emissions from airtravel")+
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
+  print(plot)
+  dev.off()
+  
+  plot<-ggplot(data=subset(new_dataset,is.na(emissions_flugzeug)==F),aes(x=answer_meaning,
+                                    y=emissions_flugzeug))+
+    geom_boxplot()+
+    #geom_boxplot(draw_quantiles = c(0.5))+
+    ylim(0,25)+
+    xlab(name[i])+
+    ylab("Emissions from airtravel")+
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
+  print(plot)
+  dev.off()
+  
+  
 }
+
+# What is the emissions from?
+
 
 

@@ -166,6 +166,15 @@ Regression_dataset<-Regression_dataset%>%
   mutate(Age=factor(Age,levels=Age_levels))
 
 
+Regression_dataset<-Regression_dataset%>%
+  mutate(Migration_background=case_when(Migration_background==1 ~ "Yes",
+                                        Migration_background==2 ~ "No"))%>%
+  mutate(Migration_background=factor(Migration_background,levels=c("No","Yes")))
+
+unique(Regression_dataset$Migration_background)
+
+
+
 #write.csv(Regression_dataset,"Regression_dataset.csv",row.names = F)
 
 # Descriptive graph for days:

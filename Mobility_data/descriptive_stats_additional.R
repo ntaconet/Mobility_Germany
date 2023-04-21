@@ -64,22 +64,50 @@ plot<-ggplot(data=data_mean)+
   geom_bar(aes(Q_cut,Emissions_wege/1000,fill="Daily emissions"),stat="identity")+
   scale_x_discrete(name="Quantile",labels=as.character(c(3:10)))+
   labs(y="Annual emissions (tCO2e)",fill=" ")+
-  scale_fill_viridis_d()+
-  theme_bw()
+  scale_fill_viridis_d()#+
+  #theme_bw()
 
 plot
 ggsave("Descriptive_graphs/Total_emissions.png",plot=plot)  
 
 
-plot<-ggplot(data=data_mean)+
+
+plot1<-ggplot(data=data_mean)+
   geom_bar(aes(Q_cut,Total_emissions/1000,fill="Long-distance emissions"),stat="identity")+
   geom_bar(aes(Q_cut,Emissions_wege/1000,fill="Daily emissions"),stat="identity")+
   scale_x_discrete(name="Quantile",labels=as.character(c(3:10)))+
   labs(y="Annual emissions (tCO2e)",fill=" ")+
-  scale_fill_viridis_d()
-theme_bw()
+  scale_fill_viridis_d()+
+  theme_bw()+
+  theme(legend.position="none")
 
-plot
-ggsave("Descriptive_graphs/Total_emissions_share.png",plot=plot)  
+plot1
+
+ggsave("Descriptive_graphs/Total_emissions_share.png",plot=plot1)  
+
+plot2<-ggplot(data=data_mean)+
+  geom_bar(aes(Q_cut,100,fill="Long-distance emissions"),stat="identity")+
+  geom_bar(aes(Q_cut,100*Emissions_wege/Total_emissions,fill="Daily emissions"),stat="identity")+
+  scale_x_discrete(name="Quantile",labels=as.character(c(3:10)))+
+  labs(y="Percent (%)",fill=" ")+
+  scale_fill_viridis_d()+
+  theme_bw()+
+  theme(legend.position="none")
+
+plot2
+
+
+legend<-get_legend(plot+guides(fill = guide_legend(nrow = 1))+theme(legend.position="bottom"))
+
+plot_combined<-plot_grid(plot1,plot2)
+
+plot_combined
+
+library(cowplot)
+pdf("Descriptive_graphs/Breakdown_emissions_quantile.pdf")
+plot_grid(plot_combined,legend,ncol=1,rel_heights=c(1,0.2))
+dev.off()
+
+
 
 

@@ -139,6 +139,8 @@ Sumtable_attitude<-cbind(table_regressionsample,Sumtable_caralot,Sumtable_bikeal
 
 write.csv(Sumtable_attitude,"Descriptive_graphs/sumtable_attitude.csv")
 
-# now let's look at two different sammples general
+# How many car sharing?
+nb_carsharing<-nrow(subset(Regression_dataset,Car_sharing=="Yes"))/nrow(Regression_dataset)
 
+# What are the different deciles?
 

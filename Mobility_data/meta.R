@@ -56,7 +56,7 @@ source("build_person_dataset.R")
 # STEP 3 : Descriptive stat and graphs
 #######################################
 
-#source("descriptive_stats.R")
+source("descriptive_stats.R")
 
 
 ########################################
