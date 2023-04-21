@@ -21,7 +21,7 @@ top_10<-wtd.quantile(Regression_dataset$Total_emissions_wout_RW,0.90,na.rm=T,wei
 #ggplot(data=Regression_dataset,aes(x=Total_emissions_wout_RW))+
  # geom_density()
 
-#Independant_variables_torun<-c("emissions_RL","Total_emissions_wout_RW","emissions_wege")
+# Dependent_variables_torun<-c("emissions_RL","Total_emissions_wout_RW","emissions_wege")
 
 # to specify a regression to run, need to add
 
@@ -29,7 +29,7 @@ Table_regressions_to_Run<-read_xlsx("Other_input/Table_Regressions_to_Run.xlsx")
 
 #for (reg_no in 1:nrow(Table_regressions_to_Run)){
 for (reg_no in nrow(Table_regressions_to_Run)){
-  Independant_variable<-Table_regressions_to_Run$Independant_variable[reg_no]
+  Dependent_variable<-Table_regressions_to_Run$Dependent_variable[reg_no]
   
   # Whether to add control or not.
   add_control_bool<-as.logical(Table_regressions_to_Run$add_control_bool[reg_no])
@@ -45,7 +45,7 @@ for (reg_no in nrow(Table_regressions_to_Run)){
   # In the table, variables are classified, and each line specifies values to remove (corresponding to no Answer, NA...).
   regression_type<-"basic"
   
-  table_variables<-read_excel(paste("Other_input/Table_Dependent_Variables_",regression_type,".xlsx",sep=""))
+  table_variables<-read_excel(paste("Other_input/Table_Independent_Variables_",regression_type,".xlsx",sep=""))
   
   Variables_tokeep<-subset(table_variables,type %in% c("main","control","attitude","accessibility","other") & include==1 | (add_control_bool==T & varname %in% add_control))
   additional_test<-""
@@ -54,16 +54,16 @@ for (reg_no in nrow(Table_regressions_to_Run)){
   # to remove
   #Variables_tokeep<-subset(Variables_tokeep,!substr(label,1,5)=="Enjoy")
   
-  Dependant_variables<-Variables_tokeep$label
+  Independent_variables<-Variables_tokeep$label
   
   # Remove unemployment variable
-  #Dependant_variables<-Dependant_variables[Dependant_variables!="Employment"]
+  #Independent_variables<-Independent_variables[Independent_variables!="Employment"]
   #additional_test<-"_noemployment"
   
   
   # Remove attitudinal variable
   #Variables_tokeep<-subset(table_variables,type %in% c("main","control","accessibility","other") & include==1 | (add_control_bool==T & varname %in% add_control))
-  #Dependant_variables<-Variables_tokeep$label
+  #Independent_variables<-Variables_tokeep$label
   #additional_test<-"_noattitude"
   
   source("quantile_regressions.R")

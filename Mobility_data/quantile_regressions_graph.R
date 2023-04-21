@@ -22,20 +22,19 @@ Title_Table<-Table_regressions_to_Run$Title_Table[reg_no]
 # In the table, variables are classified, and each line specifies values to remove (corresponding to no Answer, NA...).
 regression_type<-"basic"
 
-table_variables<-read_excel(paste("Other_input/Table_Dependent_Variables_",regression_type,".xlsx",sep=""))
+table_variables<-read_excel(paste("Other_input/Table_Independent_Variables_",regression_type,".xlsx",sep=""))
 
 Variables_tokeep<-subset(table_variables,type %in% c("main","control","attitude","accessibility","other") & include==1 | (add_control_bool==T & varname %in% add_control))
-Dependant_variables<-Variables_tokeep$label
+Independent_variables<-Variables_tokeep$label
 
 
-#Regression_OLS<-lm(paste(Independant_variable,"~",paste(Dependant_variables,collapse=" + ")),
-Regression_OLS<-lm(paste(Independant_variable,"~",paste(Dependant_variables,collapse=" + ")),
+Regression_OLS<-lm(paste(Dependent_variable,"~",paste(Independent_variables,collapse=" + ")),
                    data=Regression_dataset,
                    weights=P_GEW_num)
 
 stargazer(car::vif(Regression_OLS))
 
-Regression_Quantile_all<-rq(paste(Independant_variable,"~",paste(Dependant_variables,collapse=" + ")),
+Regression_Quantile_all<-rq(paste(Dependent_variable,"~",paste(Independent_variables,collapse=" + ")),
                               data=Regression_dataset,
                               tau=c(0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1),
                               weights=P_GEW_num)
