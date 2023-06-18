@@ -7,11 +7,32 @@ Person_dataset<-Person_dataset%>%
 dir.create("Descriptive_graphs")
 
 
+# how many ppl are responsible for the top 10% of emissions from long distance
+
+Top_10_RL<-Person_dataset%>%
+  filter(emissions_RL>wtd.quantile(Person_dataset$emissions_RL,0.90,na.rm=T,weight=Person_dataset$P_GEW_num))
+
+emissions_top10<-sum(Top_10_RL$emissions_RL*Top_10_RL$P_GEW_num)
+emissions_tot<-sum(Person_dataset$emissions_RL*Person_dataset$P_GEW_num,na.rm=T)
+Share_of_emissions<-emissions_top10/emissions_tot
+Share_of_emissions
+
+# how many ppl are responsible for the top 10% of emissions in total
+Top_10_total<-Person_dataset%>%
+  filter(Total_emissions_wout_work>wtd.quantile(Person_dataset$Total_emissions_wout_work,0.90,na.rm=T,weight=Person_dataset$P_GEW_num))
+
+emissions_top10<-sum(Top_10_total$Total_emissions_wout_work*Top_10_total$P_GEW_num)
+emissions_tot<-sum(Person_dataset$Total_emissions_wout_work*Person_dataset$P_GEW_num,na.rm=T)
+Share_of_emissions<-emissions_top10/emissions_tot
+Share_of_emissions
+
+
 # Basic density plots
 # In this plot I will plot a few descriptive graphs to show relationship between long-distance Reise emissions and other variables
 
-# First, emissions from long-distance scatterplots against other emissions
+
 if (FALSE){
+# First, emissions from long-distance scatterplots against other emissions
 #remove observations from the 20 highest emissions?
 percentile_remove<-0.90
 
@@ -46,7 +67,6 @@ plot<-ggplot(data=subset(Person_dataset),
 ggsave("Descriptive_graphs/leisure_wege.pdf",plot=plot)
 
 
-
 # Emissions from commute
 plot<-ggplot(data=subset(Person_dataset),
                          #emissions_RL < quantile(Person_dataset$emissions_RL,percentile_remove,na.rm=T) & 
@@ -64,20 +84,7 @@ plot<-ggplot(data=subset(Person_dataset),
 
 ggsave("Descriptive_graphs/commute_wege.pdf",plot=plot)
 
-
-# correlation?
-data_cor<-cor(Person_dataset[c("emissions_RL","emissions_WE","emissions_WC","emissions_WL")],use="complete.obs")
 }
-
-# how many ppl are responsible for the top 10% of emissions
-
-Top_10_RL<-Person_dataset%>%
-  filter(emissions_RL>wtd.quantile(Person_dataset$emissions_RL,0.90,na.rm=T,weight=Person_dataset$P_GEW_num))
-
-emissions_top10<-sum(Top_10_RL$emissions_RL*Top_10_RL$P_GEW_num)
-emissions_tot<-sum(Person_dataset$emissions_RL*Person_dataset$P_GEW_num,na.rm=T)
-Share_of_emissions<-emissions_top10/emissions_tot
-Share_of_emissions
 
 
 # Then emissions from long-distance reise against:
@@ -88,6 +95,9 @@ varname=c("hheink_gr2","P_BIL","hhgr_gr","alter_gr2","P_EINVM_RAD","HP_SEX","GEM
 #limit_emissions<-10**6
 
 percentile_remove<-0.75
+
+
+if (FALSE){
 
 #Person_withoutoutliers<-subset(Person_dataset,emissions_RL < )
 
@@ -147,6 +157,7 @@ for (i in 1:length(name)){
   
 }
 
+}
 # What is the emissions from?
 
 

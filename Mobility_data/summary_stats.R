@@ -1,6 +1,25 @@
 # First some descriptive stats ----
-table_variables<-read_excel(paste("Other_input/Table_Dependent_Variables_basic.xlsx",sep=""))
+table_variables<-read_excel(paste("Other_input/Table_Independent_Variables_basic.xlsx",sep=""))
 variables0<-subset(table_variables,include==1)
+
+
+
+# Plot Lorenz Curves -----
+
+data_lorenzcurve<-subset(Person_dataset,is.na(Total_emissions_wout_work)==F)
+
+pdf(paste("Descriptive_graphs/Lorenz_curves.pdf",sep=""))
+plot(Lc(data_lorenzcurve$Total_emissions_wout_work,n=data_lorenzcurve$P_GEW_num),col="#55C667FF",
+     xlab="Cumulative share of people",
+     ylab="Cumulative share of emissions")
+lines(Lc(data_lorenzcurve$emissions_RL,n=data_lorenzcurve$P_GEW_num),col="#FDE725FF")
+lines(Lc(data_lorenzcurve$emissions_wege_wout_work,n=data_lorenzcurve$P_GEW_num),col="#482677FF")
+legend("topleft",col=c("#55C667FF","#FDE725FF","#482677FF"),lty=c(1,1),
+       legend=c("Total emissions",  
+                "Emissions from long-distance travels",
+                "Emissions from daily travels"),
+)
+dev.off()
 
 
 # 1/ The whole sample ----
@@ -19,7 +38,10 @@ for (i in 1:nrow(variables0)){
 
 Regression_dataset_wholesample<-Regression_dataset_wholesample%>%
   filter(!is.na(emissions_RL))%>%
-  filter(!is.na(Total_emissions_wout_RW))
+  filter(!is.na(Total_emissions_wout_work))
+
+write.csv(Regression_dataset_wholesample,"Output/Regression_dataset_wholesample.csv",row.names=F)
+
 
 
 # 2/ The sample we'll be working with ----
@@ -40,7 +62,14 @@ sum(!is.na(Regression_dataset$emissions_RL))
 
 Regression_dataset_NoNA<-Regression_dataset_NoNA%>%
   filter(!is.na(emissions_RL))%>%
-  filter(!is.na(Total_emissions_wout_RW))
+  filter(!is.na(Total_emissions_wout_work))
+
+write.csv(Regression_dataset_NoNA,"Output/Regression_dataset_NoNA.csv",row.names=F)
+
+Regression_dataset_NoZeros<-Regression_dataset_NoNA%>%
+  filter(Total_emissions!=0)
+
+write.csv(Regression_dataset_NoZeros,"Output/Regression_dataset_NoZeros.csv")
 
 # 3/ Summary stats ----
 
@@ -57,7 +86,6 @@ summ_stats_wholesample<-Regression_dataset_wholesample%>%
 sumtable(summ_stats_wholesample,out='latex',file="Descriptive_graphs/summary_table_Wholesample.tex",title="Summary Stat, whole sample",fit.page=9)
 
 
-
 table_wholesample<-sumtable(summ_stats_wholesample,out='return')
 table_regressionsample<-sumtable(summ_stats_Regression,out='return')
 
@@ -70,12 +98,20 @@ table_wholesample<-table_wholesample%>%
 
 summ_stats_comparison<-cbind(table_wholesample,table_regressionsample)
 
+stargazer(summ_stats_comparison,out="Descriptive_graphs/summary_table_comparison.tex")
+
+#latex(summ_stats_comparison,rowlabel = "X", collabel =  "Y")
+
+#print(summ_stats_comparison.to_latex())
+
+#latex(summ_stats_comparison)
+
 #sumtable(summ_stats_comparison,out='latex',file="Descriptive_graphs/summary_table.csv")
 
 
 # do the Kolmogorov-Smirnov Test
-ks.test(Regression_dataset_NoNA$Total_emissions_wout_RW,
-        Regression_dataset_wholesample$Total_emissions_wout_RW)
+ks.test(Regression_dataset_NoNA$Total_emissions_wout_work,
+        Regression_dataset_wholesample$Total_emissions_wout_work)
 
 # 4/ Other subsamples -----
 
@@ -142,5 +178,8 @@ write.csv(Sumtable_attitude,"Descriptive_graphs/sumtable_attitude.csv")
 # How many car sharing?
 nb_carsharing<-nrow(subset(Regression_dataset,Car_sharing=="Yes"))/nrow(Regression_dataset)
 
-# What are the different deciles?
+# What are the different deciles? ----- 
+
+
+top_10<-wtd.quantile(Regression_dataset$Total_emissions_wout_work,0.90,na.rm=T,weight=Regression_dataset$P_GEW_num)
 

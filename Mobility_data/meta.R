@@ -58,6 +58,8 @@ source("build_person_dataset.R")
 
 source("descriptive_stats.R")
 
+source("descriptive_stats_additional.R")
+
 
 ########################################
 # STEP 4 : Regressions

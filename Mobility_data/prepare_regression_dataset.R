@@ -15,7 +15,7 @@ Person_dataset<-Person_dataset%>%
 # In the table, variables are classified, and each line specifies values to remove (corresponding to no Answer, NA...).
 regression_type<-"basic"
 
-table_variables<-read_excel(paste("Other_input/Table_Dependent_Variables_",regression_type,".xlsx",sep=""))
+table_variables<-read_excel(paste("Other_input/Table_Independent_Variables_",regression_type,".xlsx",sep=""))
 
 ################
 # Perform quantile regressions ----
@@ -47,7 +47,6 @@ Regression_dataset<-Person_dataset%>%
   rename_at(vars(as.character(Variables_tokeep$varname)),~as.character(Variables_tokeep$label))
 
 
-
 # Change a few labels:
 
 Income_new_levels<-c("Less than 900e/m","900-2000e/m","2000-4000e/m","4000-6000e/m",">6000e/m")
@@ -67,7 +66,6 @@ Regression_dataset<-Regression_dataset%>%
                              Education %in% c(4) ~ Education_new_levels[2],
                              Education %in% c(5,6) ~ Education_new_levels[3]))%>%
   mutate(Education=factor(Education,levels=Education_new_levels))
-
 
 Location_new_levels<-c("Small city","Urban environment","Middle city","Big city","Metropole")
 
@@ -193,7 +191,7 @@ ggplot(data=Regression_dataset,aes(x=factor(ST_MONAT),y=emissions_reise))+
   coord_cartesian(ylim=c(0,10**3))
 }
 
-if (FALSE){
+#if (FALSE){
 Regression_dataset<-Regression_dataset%>%
   mutate(Month=case_when(Month %in% c(1,2,3,4) ~ "1_low",
                             Month %in% c(5,6,7,8,12) ~ "2_medium",
@@ -204,4 +202,4 @@ Regression_dataset<-Regression_dataset%>%
                             Weekday %in% c(7) ~ "3_Sunday"))%>%
   mutate(Weekday=factor(Weekday))
 
-}
+#}

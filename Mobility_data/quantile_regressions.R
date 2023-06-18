@@ -1,7 +1,7 @@
 
 for (variable_n in Independent_variables){
-  print(variable_n)
-  print(sum(is.na(Regression_dataset[variable_n])))
+#  print(variable_n)
+#  print(sum(is.na(Regression_dataset[variable_n])))
 }
 
 # Make sure we add this later to 
@@ -9,17 +9,6 @@ for (variable_n in Independent_variables){
 
 # 
 #library("gglorenz")
-
-data_lorenzcurve<-subset(Person_dataset,is.na(Total_emissions_wout_RW)==F)
-
-#lorenz.curve(data=data_lorenzcurve[1:100,c("Total_emissions_wout_RW","P_GEW_num")])
-
-pdf(paste("Descriptive_graphs/Lorenz_curves.pdf",sep=""))
-plot(Lc(data_lorenzcurve$Total_emissions_wout_RW,n=data_lorenzcurve$P_GEW_num),col=2)
-lines(Lc(data_lorenzcurve$emissions_reise,n=data_lorenzcurve$P_GEW_num),col=3)
-legend("topleft",col=c(2,3),lty=c(1,1),legend=c("Total emissions","Emissions from long-distance travels"))
-dev.off()
-
 
 
 #unique(Person_dataset$ST_MONAT_grouped)
@@ -30,7 +19,7 @@ Regression_OLS<-lm(paste(Dependent_variable,"~",paste(Independent_variables,coll
                    data=Regression_dataset,
                    weights=P_GEW_num)
 
-summary(Regression_OLS)
+#summary(Regression_OLS)
 
 stargazer(car::vif(Regression_OLS),
           out=paste("Robustness_graphs/VIF_",Name_Regression,".tex",sep=""),
@@ -55,7 +44,7 @@ dev.off()
 #Regression_Quantile
 
 # for plane emissions we want to show quantile 90th, 95th and 99th, as there as mostly zeros.
-if (Dependent_variable=="emissions_flugzeug"){
+if (Dependent_variable %in% c("emissions_flugzeug","emissions_flugzeug_wout_work")){
   tau_list<-c(0.90,0.95,0.99)
   } else {
   tau_list<-c(0.5,0.75,0.9)
@@ -76,10 +65,14 @@ Regression_Quantile_tau3<-rq(paste(Dependent_variable,"~",paste(Independent_vari
                              tau=tau_list[3],
                              weights=P_GEW_num)
 
+summary.rq(Regression_Quantile_tau1,se="boot")
+
+#stargazer(Regression_OLS,Regression_Quantile_tau1,Regression_Quantile_tau2,Regression_Quantile_tau3)
+
 
 stargazer(Regression_OLS,Regression_Quantile_tau1,Regression_Quantile_tau2,Regression_Quantile_tau3, 
           intercept.bottom = FALSE,
-          digits=2,
+          digits=1,
           rq.se="boot",
           label=Name_Regression,
           #rq.se="nid",

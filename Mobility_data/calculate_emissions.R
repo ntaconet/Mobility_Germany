@@ -183,6 +183,7 @@ Reisen_Person<-Reisen%>%
             emissions_RL=sum(emissions[R_ZWECK %in% RL]),
             # also adding total Flugzeug
             emissions_flugzeug=sum(emissions[hvm_r==5]),
+            emissions_flugzeug_RL=sum(emissions_RL[hvm_r==5]),
             
             # nb of reported reisen (to correct if nb of Reise is >3)
             nb_reported_reisen=n()

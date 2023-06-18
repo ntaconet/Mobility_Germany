@@ -34,7 +34,8 @@ Person_dataset<-Person_dataset%>%
   mutate(emissions_reise=emissions_reise*factor_reisen,
          emissions_RW=emissions_RW*factor_reisen,
          emissions_RL=emissions_RL*factor_reisen,
-         emissions_flugzeug=emissions_flugzeug*factor_reisen)%>%
+         emissions_flugzeug=emissions_flugzeug*factor_reisen,
+         emissions_flugzeug_RL=emissions_flugzeug_RL*factor_reisen)%>%
   mutate(emissions_wege=emissions_wege*factor_wege,
          emissions_WL=emissions_WL*factor_wege,
          emissions_WE=emissions_WE*factor_wege,
@@ -55,8 +56,11 @@ Person_dataset<-Person_dataset%>%
 
 Person_dataset<-Person_dataset%>%
   mutate(Total_emissions=emissions_wege+emissions_reise,
+         
          # exclude Reisen Work
-         Total_emissions_wout_RW=emissions_wege+(emissions_reise-emissions_RW))
+         Total_emissions_wout_work=emissions_wege-emissions_WW+(emissions_reise-emissions_RW),
+         emissions_wege_wout_work=emissions_wege-emissions_WW,
+         emissions_flugzeug_wout_work=emissions_flugzeug_RL)
 
 # Making the same thing with the question "Verkehrsmittel auf regelm berufl Wegen am Stichtag"
 # Create a dummy variable that says if you take your bike for commute

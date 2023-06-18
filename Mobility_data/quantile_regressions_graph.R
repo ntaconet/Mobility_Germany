@@ -7,7 +7,7 @@ Table_regressions_to_Run<-read_xlsx("Other_input/Table_Regressions_to_Run.xlsx")
 
 reg_no<-3
 
-Independant_variable<-Table_regressions_to_Run$Independant_variable[reg_no]
+Dependent_variable<-Table_regressions_to_Run$Dependent_variable[reg_no]
 
 # Whether to add control or not.
 add_control_bool<-as.logical(Table_regressions_to_Run$add_control_bool[reg_no])
