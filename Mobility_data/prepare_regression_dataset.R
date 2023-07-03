@@ -186,16 +186,24 @@ ggplot(data=Regression_dataset,aes(x=factor(ST_WOTAG),y=emissions_wege))+
   geom_boxplot(outlier.shape=NA)+
   coord_cartesian(ylim=c(0,6000))
 
-ggplot(data=Regression_dataset,aes(x=factor(ST_MONAT),y=emissions_reise))+
+
+ggplot(data=Regression_dataset,aes(x=factor(Month),y=emissions_reise))+
   geom_boxplot(outlier.shape=NA)+
   coord_cartesian(ylim=c(0,10**3))
 }
 
+ggplot(data=Regression_dataset,aes(x=factor(Month),y=emissions_RL))+
+  geom_boxplot(outlier.shape=NA)+
+  coord_cartesian(ylim=c(0,10**3))
+
+ggsave("Descriptive_graphs/month.png")
+
+
 #if (FALSE){
 Regression_dataset<-Regression_dataset%>%
   mutate(Month=case_when(Month %in% c(1,2,3,4) ~ "1_low",
-                            Month %in% c(5,6,7,8,12) ~ "2_medium",
-                            Month %in% c(9,10,11) ~ "3_high"))%>%
+                            Month %in% c(5,6,7,11,12) ~ "2_medium",
+                            Month %in% c(8,9,10) ~ "3_high"))%>%
   mutate(Month=factor(Month))%>%
   mutate(Weekday=case_when(Weekday %in% c(1,2,3,4,5) ~ "1_weekday",
                             Weekday %in% c(6) ~ "2_Saturday",
