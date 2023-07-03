@@ -28,6 +28,8 @@ library(ineq) # for plotting a lorenz curve
 library(stargazer)
 library(prim) # for PRIM analysis?
 library(sdtoolkit) # for PRIM analysis
+library(foreign)
+library(Ecdat)
 
 # Create Output folder
 dir.create("Output")
