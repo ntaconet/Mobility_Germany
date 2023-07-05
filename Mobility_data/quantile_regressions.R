@@ -128,17 +128,17 @@ for (tau_n in c(1,2,3)){
   predicted_values <- fitted(get(paste("Regression_Quantile_tau",
                                      as.character(tau_n),
                                      sep="")))
-  quantile_loss_observed <- mean(pmax(Regression_dataset[,Dependent_variable] - predicted_values, 0))
-  quantile_loss_null <- mean(pmax(Regression_dataset[,Dependent_variable] - mean(Regression_dataset[,Dependent_variable]), 0))
-  quantile_pseudo_R2 <- 1 - (quantile_loss_observed / quantile_loss_null)
+  #quantile_loss_observed <- mean(pmax(Regression_dataset[,Dependent_variable] - predicted_values, 0))
+  #quantile_loss_null <- mean(pmax(Regression_dataset[,Dependent_variable] - mean(Regression_dataset[,Dependent_variable]), 0))
+  #quantile_pseudo_R2 <- 1 - (quantile_loss_observed / quantile_loss_null)
 
-  print(quantile_pseudo_R2)
+  #print(quantile_pseudo_R2)
   
-  quantile_loss_observed <- sum(pmax(Regression_dataset[,Dependent_variable] - predicted_values, 0))
-  quantile_loss_null <- sum(pmax(Regression_dataset[,Dependent_variable] - mean(Regression_dataset[,Dependent_variable]), 0))
-  quantile_pseudo_R2 <- 1 - (quantile_loss_observed / quantile_loss_null)
+  #quantile_loss_observed <- sum(pmax(Regression_dataset[,Dependent_variable] - predicted_values, 0))
+  #quantile_loss_null <- sum(pmax(Regression_dataset[,Dependent_variable] - mean(Regression_dataset[,Dependent_variable]), 0))
+  #quantile_pseudo_R2 <- 1 - (quantile_loss_observed / quantile_loss_null)
 
-  print(quantile_pseudo_R2)
+  #print(quantile_pseudo_R2)
   
   
   
