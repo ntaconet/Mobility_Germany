@@ -8,7 +8,7 @@ Emission_factors_Flugzeug_UBA <- read_excel("Other_input/Emission_Factors_Flugze
 
 # Retain UBA data
 Emission_factors<-Emission_factors_UBA%>%
-  mutate(EF=EF_UBA,
+  rename(EF=EF_UBA,
          EF_Fzkm=EF_UBA_Fzkm)%>%
   # for Motos and AST Rufbus, use HBEFA estimates.
   mutate(EF_Fzkm=ifelse(varname %in% c("W_VM_D","W_VM_E","W_VM_F","W_VM_N"),
@@ -17,8 +17,7 @@ Emission_factors<-Emission_factors_UBA%>%
   mutate(EF_Fzkm=ifelse(varname %in% c("W_VM_I"),
                         subset(Emission_factors_HBEFA,varname==varname & HBEFA_technology=="Diesel")$EF_HBEFA_2015, 
                         EF_Fzkm))%>%
-  mutate(EF=as.numeric(EF),EF_Fzkm=as.numeric(EF_Fzkm))%>%
-  select(Label,varname,EF,EF_Fzkm)#%>%
+  mutate(EF=as.numeric(EF),EF_Fzkm=as.numeric(EF_Fzkm))
 
 Emission_factors_Flugzeug_UBA<-Emission_factors_Flugzeug_UBA%>%
   mutate(EF_Flugzeug_UBA=as.numeric(EF_Flugzeug_UBA))
@@ -135,6 +134,11 @@ all_travels_aggregated<-all_travels_aggregated%>%
 ggplot(data=all_travels,aes(x=" ",y=emissions,fill=transportation_mode))+
   geom_bar(stat="identity",position="fill")
 
+unique(all_travels$transportation_mode)
+
+all_travels<-all_travels%>%
+  mutate(transportation_mode=factor(transportation_mode,
+                                    levels=c("Car","Long-distance bus", "Plane","Public transportation","Train","Others")))
 
 plot_share_by_category<-ggplot(data=all_travels,
                                aes(x=type_travel,
@@ -142,8 +146,9 @@ plot_share_by_category<-ggplot(data=all_travels,
                                    fill=transportation_mode))+
   geom_bar(stat="identity",position="fill")+
   labs(y="Share of emissions",x="Type of travel",fill="Transportation mode")+
-  theme_bw()#+
-  #scale_fill_brewer(palette="Set1")
+  theme_bw()+
+  #scale_fill_brewer(palette="Dark2",type="qual")#+
+  scale_fill_npg()
 
 plot_share_by_category
 
