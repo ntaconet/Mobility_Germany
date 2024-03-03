@@ -19,6 +19,7 @@ Emission_factors<-Emission_factors_UBA%>%
                         EF_Fzkm))%>%
   mutate(EF=as.numeric(EF),EF_Fzkm=as.numeric(EF_Fzkm))
 
+# convert emissions factor from UBA into numeric values
 Emission_factors_Flugzeug_UBA<-Emission_factors_Flugzeug_UBA%>%
   mutate(EF_Flugzeug_UBA=as.numeric(EF_Flugzeug_UBA))
 
@@ -94,9 +95,9 @@ Reisen<-Reisen%>%
 # How many NAs?
 sum(is.na(Reisen$emissions))
 
-esay<-subset(Reisen,R_ZIEL==9)
 
 # Plot the contribution of different transportation mode to total emissions ----
+#to avoid double counting, we only keep wege that are less than 100 km, and Reisen that are above 100 km.
 
 # emissions from wege should be multiplied by 365 days
 factor_wege<-365
@@ -104,6 +105,8 @@ factor_wege<-365
 factor_reisen<-4
 
 Wege_tokeep<-Wege%>%
+  # only those below 100 km
+  filter(wegkm_num<100)%>%
   # select type of transportation hvm_diff2
   mutate(transportation_mode=case_when(hvm %in% c(1,2) ~ "Others",
                                        hvm %in% c(5) ~ "Public transportation",
@@ -113,6 +116,8 @@ Wege_tokeep<-Wege%>%
   mutate(type_travel="Daily mobility")
            
 Reisen_tokeep<-Reisen%>%
+  # only those that are greater than 100 km
+  filter(R_ENTF>100)%>%
   mutate(transportation_mode=case_when(hvm_r %in% c(1) ~ "Car",
                                        hvm_r %in% c(2) ~ "Train",
                                        hvm_r %in% c(3,4) ~ "Long-distance bus",
@@ -131,12 +136,13 @@ all_travels_aggregated<-all_travels%>%
 all_travels_aggregated<-all_travels_aggregated%>%
   mutate(total=total/sum(all_travels_aggregated$total))
 
-ggplot(data=all_travels,aes(x=" ",y=emissions,fill=transportation_mode))+
-  geom_bar(stat="identity",position="fill")
+#ggplot(data=all_travels,aes(x=" ",y=emissions,fill=transportation_mode))+
+#  geom_bar(stat="identity",position="fill")
 
 unique(all_travels$transportation_mode)
 
 all_travels<-all_travels%>%
+  filter(is.na(transportation_mode)==FALSE)%>%
   mutate(transportation_mode=factor(transportation_mode,
                                     levels=c("Car","Long-distance bus", "Plane","Public transportation","Train","Others")))
 
@@ -193,6 +199,7 @@ Reisen_Person<-Reisen%>%
             # nb of reported reisen (to correct if nb of Reise is >3)
             nb_reported_reisen=n()
             )
+
 sum(is.na(Reisen_Person$emissions_RL))
 
 # W_ZWECK CATEGORIES
