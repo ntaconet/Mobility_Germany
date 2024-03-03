@@ -41,6 +41,8 @@ Wege<-Wege%>%
   # repace coding for missing values by NA for the two variables we will use
   mutate(hvm_diff2=replace(hvm_diff2,hvm_diff2 %in% c(703,99),NA))%>% # 703: Weg ohne Detailerfassung (CAWI) / 99: No answer (only ~2000 obs)
   mutate(wegkm_num=replace(wegkm_num,wegkm_num %in% c(9994,9999,70703),NA))%>% # 9994: unplausibler Wert / 9999: keine Angabe / 70703: Weg ohne Detailerfassung (CAWI)
+  # keep only those below 100 km
+  filter(wegkm_num<100)%>%
   # Compute emissions
   mutate(emissions=ifelse(hvm_diff2 %in% c(4,5,6,7,8,9,12,17,18),
                           # if Pkw or Lkw or Moto or Rufbus, then divide vehicule emissions by nb of person in vehicule:
@@ -58,9 +60,13 @@ hvm_r_matching<-read_excel("Other_input/hvm_r_matching.xlsx")
 Reisen<-read.csv("CSV/MiD2017_Reisen.csv",sep=";",fileEncoding="UTF-8-BOM")
 
 Reisen<-Reisen%>%
+
   # replace coding for missing values by NA for the two variables we will use
   mutate(hvm_r=replace(hvm_r,hvm_r==99,NA))%>% # 99: No answer
   mutate(R_ENTF=replace(R_ENTF,R_ENTF %in% c(99994,99999),NA))%>% # 99994: unplausibler Wert / 99999: keine Angabe
+
+  # only those that are greater than 100 km
+  filter(R_ENTF>100)%>%
   # Calculate emissions
   mutate(
     emissions=case_when(
@@ -105,8 +111,7 @@ factor_wege<-365
 factor_reisen<-4
 
 Wege_tokeep<-Wege%>%
-  # only those below 100 km
-  filter(wegkm_num<100)%>%
+
   # select type of transportation hvm_diff2
   mutate(transportation_mode=case_when(hvm %in% c(1,2) ~ "Others",
                                        hvm %in% c(5) ~ "Public transportation",
@@ -116,8 +121,7 @@ Wege_tokeep<-Wege%>%
   mutate(type_travel="Daily mobility")
            
 Reisen_tokeep<-Reisen%>%
-  # only those that are greater than 100 km
-  filter(R_ENTF>100)%>%
+
   mutate(transportation_mode=case_when(hvm_r %in% c(1) ~ "Car",
                                        hvm_r %in% c(2) ~ "Train",
                                        hvm_r %in% c(3,4) ~ "Long-distance bus",
@@ -146,7 +150,11 @@ all_travels<-all_travels%>%
   mutate(transportation_mode=factor(transportation_mode,
                                     levels=c("Car","Long-distance bus", "Plane","Public transportation","Train","Others")))
 
-plot_share_by_category<-ggplot(data=all_travels,
+all_travels_by_category<-all_travels%>%
+  group_by(type_travel,transportation_mode)%>%
+  summarise(emissions=sum(emissions,na.rm=T))
+
+plot_share_by_category<-ggplot(data=all_travels_by_category,
                                aes(x=type_travel,
                                    y=emissions,
                                    fill=transportation_mode))+
@@ -199,7 +207,6 @@ Reisen_Person<-Reisen%>%
             # nb of reported reisen (to correct if nb of Reise is >3)
             nb_reported_reisen=n()
             )
-
 sum(is.na(Reisen_Person$emissions_RL))
 
 # W_ZWECK CATEGORIES
