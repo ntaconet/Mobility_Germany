@@ -1,8 +1,3 @@
-# 
-
-library(ggpubr)
-library(cowplot)
-
 Person_dataset<-read.csv("Output/Person_dataset.csv")
 
 # making sure variable types are correct
@@ -84,7 +79,9 @@ plot1<-ggplot(data=data_mean)+
   labs(y="Annual emissions (tCO2e)",fill=" ")+
   scale_fill_viridis_d()+
   theme_bw()+
-  theme(legend.position="none")
+  #theme(legend.position="none")
+  theme(
+        legend.position =c(0.4,0.8))
 
 plot1
 
@@ -102,16 +99,31 @@ plot2<-ggplot(data=data_mean)+
 plot2
 
 
-legend<-get_legend(plot+guides(fill = guide_legend(nrow = 1))+theme(legend.position="bottom"))
+plot3<-ggplot(data=data_mean)+
+  geom_bar(aes(Q_cut,100,fill="Long-distance emissions"),stat="identity")+
+  geom_bar(aes(Q_cut,100*Emissions_wege/Total_emissions,fill="Daily emissions"),stat="identity")+
+  scale_x_discrete(name="Quantile",labels=as.character(c(3:10)))+
+  labs(y="Percent (%)",fill=" ")+
+  scale_fill_viridis_d()+
+  theme_bw()+
+  guides(fill = guide_legend(nrow = 1))
+#  theme(legend.position="none")
+
+plot3
+
+legend<-get_legend(plot3)
 
 plot_combined<-plot_grid(plot1,plot2)
 
-plot_combined
 
-library(cowplot)
-pdf("Descriptive_graphs/Breakdown_emissions_quantile.pdf")
-plot_grid(plot_combined,legend,ncol=1,rel_heights=c(1,0.2))
+pdf("Figures_article/Breakdown_emissions_quantile.pdf")
+plot_combined
 dev.off()
+
+# old plot
+#pdf("Figures_article/Breakdown_emissions_quantile.pdf")
+#plot_grid(plot_combined,legend,ncol=1,rel_heights=c(1,0.2))
+#dev.off()
 
 # quantiles ----
 
@@ -137,7 +149,7 @@ data_quantiles<-quantiles_total_emissions%>%
 
 
 
-pdf("Descriptive_graphs/Quantiles_values.pdf")
+pdf("Figures_article/Quantiles_values.pdf")
 ggplot(data=data_quantiles,aes(x=as.character(quantile),y=value/1000))+
   #facet_wrap(emission_type~.,scales="free")+
   geom_bar(stat="identity",aes(fill=emission_type),position=position_dodge())+
